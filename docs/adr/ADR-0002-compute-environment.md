@@ -2,7 +2,7 @@
 
 - **Status:** ACCEPTED (2026-08-06)
 - **Milestone:** M1
-- **Related:** Risk R-02, Assumption AS-04, AC-4 (frozen resource envelope)
+- **Related:** Risk R-02, R-15 (MPS), Assumption AS-04, AC-4 (frozen resource envelope); runtime pinned in **ADR-0004**.
 
 ## Context
 

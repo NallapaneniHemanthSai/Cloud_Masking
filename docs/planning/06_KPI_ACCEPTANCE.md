@@ -39,6 +39,32 @@ result.* A run that passes on average but fails a critical subgroup is a **fail*
 0 / 50 / 80 / 100 anchors; use **two independent raters** and report agreement + condition-wise scores.
 → The rubric will be authored and frozen at the start of Milestone 8 (before O2 is finalised).
 
+**Haze:** there is **no standalone haze KPI**. Haze is approximated within the thin-cloud class and reported
+qualitatively inside the thin-cloud stratum of KPI-1 (see Charter §3.1, `01_REQUIREMENTS.md` §8, AS-02).
+
+## 2a. Engineering KPIs (realistic project targets)
+
+These are **engineering targets set at planning time** (not measurements). Each has a target value,
+measurement method, evidence source, and a current status. All are **NOT YET MEASURED**. Segmentation-quality
+targets refer to the **cloud class(es) on the independent spatial holdout** (AC-3); resource/latency targets
+refer to the frozen `full` profile on Apple Silicon (MPS) at 512×512 patch unless noted.
+
+| ID | Metric | Target | Measurement method | Evidence source | Status |
+|----|--------|--------|--------------------|-----------------|--------|
+| **KPI-E1** | IoU (cloud class, mean over cloud classes) | **≥ 0.75** | TorchMetrics `JaccardIndex`, per-class then mean, on spatial-holdout test set. | Evaluation run + MLflow artifact (confusion matrix). | NOT YET MEASURED |
+| **KPI-E2** | F1-score (cloud) | **≥ 0.85** | TorchMetrics `F1Score` (per-class), spatial-holdout. | Evaluation report. | NOT YET MEASURED |
+| **KPI-E3** | Precision (cloud) | **≥ 0.85** | TorchMetrics `Precision`, spatial-holdout. | Evaluation report. | NOT YET MEASURED |
+| **KPI-E4** | Recall (cloud) — incl. **thin-cloud recall guardrail ≥ 0.70** | **≥ 0.85** overall; thin-cloud **≥ 0.70** | TorchMetrics `Recall`, per-class + thin-cloud subgroup. | Stratified evaluation report. | NOT YET MEASURED |
+| **KPI-E5** | Mean inference latency | **≤ 2.0 s** / 512×512 patch (MPS); ≤ 5.0 s CPU fallback | Median of ≥ 50 single-patch forward passes, warm model, timed in `services/prediction`. | Benchmark script log + `/metrics`. | NOT YET MEASURED |
+| **KPI-E6** | Peak inference memory | **≤ 4 GB** | Process RSS / MPS allocator peak during single-image inference. | Benchmark log. | NOT YET MEASURED |
+| **KPI-E7** | Frontend response time (non-inference UI actions) | **≤ 500 ms**; prediction round-trip shows progress within **300 ms** | Browser performance timing on dashboard/history/compare actions against local API. | Frontend perf log / manual measurement. | NOT YET MEASURED |
+
+> Note: KPI-E1..E4 are **quality** targets; because of thin-cloud class imbalance (R-16), **per-class IoU/F1
+> and thin-cloud recall** are authoritative — **pixel accuracy alone is never used to claim success** (NT-1).
+> The spec-mandated KPI-1..6 (§2) remain the primary acceptance gate; KPI-E1..E7 are supporting engineering
+> targets. If a supporting target proves unrealistic on the frozen MPS envelope, it is revised with rationale
+> (not silently dropped) and the revision is recorded here.
+
 ## 3. Mandatory Negative Tests (NT) — all five must pass
 
 | ID | Failure condition | Expected safe behaviour | Recovery | Milestone |

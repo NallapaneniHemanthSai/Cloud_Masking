@@ -32,9 +32,16 @@ Binary, 4-band data **cannot physically support** these objectives:
 
 ## Decision
 
-Use **CloudSEN12 as the primary dataset**. Retain **On Cloud N** strictly as the cited
-**reference-to-reproduce** baseline (to reproduce and bound the reported binary-masking behaviour, per FR-2
-and the source-to-claim map). Keep **SPARCS/Biome** noted as an optional cross-sensor robustness check.
+Adopt a **dual-dataset strategy — neither dataset is replaced**:
+
+- **Primary dataset = CloudSEN12** (13-band Sentinel-2, multi-class) — used for multi-class cloud detection,
+  O2 stratification, and the O3 cloud-vs-bright-surface contribution.
+- **Reference benchmark = On Cloud N** (4-band, binary) — **actively reproduced** to (a) validate that our
+  segmentation pipeline reproduces published binary cloud-detection results (FR-2 oracle) and (b) provide a
+  **cross-dataset domain-shift check** (Risk R-13, claim C-6). On Cloud N is a first-class part of the plan,
+  not merely cited.
+
+Keep **SPARCS/Biome** noted as an optional cross-sensor robustness check.
 
 ## Consequences
 
