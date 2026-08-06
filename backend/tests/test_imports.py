@@ -33,6 +33,10 @@ IMPORTABLE_MODULES = [
     "app.db",
     "app.schemas",
     "app.utils",
+    "app.datasets.manifest",
+    "app.datasets.integrity",
+    "app.datasets.download",
+    "app.datasets.verification",
 ]
 
 

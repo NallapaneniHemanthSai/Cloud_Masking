@@ -49,12 +49,19 @@ frontend/.vite/
 npm-debug.log*
 yarn-error.log*
 
-# --- Data (keep folders via .gitkeep; ignore contents) ---------------------------------------
-data/raw/
-data/processed/
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-# data/samples/ may hold small committed sample tiles — not ignored.
+# --- Data: ignore heavy dataset payloads under raw/processed/external; keep structure + docs ---
+data/raw/**
+data/processed/**
+data/external/**
+# Re-include directories (so git descends) and tracked documentation/keepers.
+!data/raw/**/
+!data/processed/**/
+!data/external/**/
+!data/**/README.md
+!data/**/.gitkeep
+# data/samples/, data/manifests/, and data/metadata/ are tracked (not ignored).
+# Partial-download temp files are never committed, wherever they appear.
+*.part
 
 # --- Models / checkpoints (keep folder + README; ignore weights) -----------------------------
 models/checkpoints/

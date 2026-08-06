@@ -1,0 +1,113 @@
+# =============================================================================================
+# Cloud Masking — dataset provenance manifest (Milestone 3, revised)
+#
+# Single machine-readable source of dataset provenance. Consumed by:
+#   backend/scripts/verify_datasets.py            (consistency + integrity + status report)
+#   backend/scripts/download_cloudsen12.py         (primary dataset)
+#   backend/scripts/download_on_cloud_n.py         (reference benchmark)
+#
+# HONESTY POLICY: metadata below was verified against official sources on 2026-08-06 (see
+# docs/datasets/*.md for the source URLs). Items that could NOT be confirmed are marked
+# "requires verification" with a reason. Nothing is invented. `download_urls` is empty because both
+# datasets require manual/authenticated access; scripts DOCUMENT the steps, never bypass them.
+#
+# Schema (per entry): dataset_id, name, version, homepage, source, official_paper, citation, license,
+# redistribution, download_required, manual_steps, expected_directory, expected_size,
+# checksum_algorithm, checksum, download_date, bands, label_schema, intended_use, notes.
+# Optional: role, download_urls, expected_files.
+# =============================================================================================
+
+datasets:
+
+  cloudsen12:
+    dataset_id: cloudsen12
+    name: "CloudSEN12 / CloudSEN12+"
+    role: "primary"
+    version: "CloudSEN12+ v1.1.2 (Hugging Face tacofoundation/cloudsen12); original CloudSEN12 (2022)"
+    homepage: "https://cloudsen12.github.io/"
+    source: "https://huggingface.co/datasets/tacofoundation/cloudsen12 (Cloud-Optimized GeoTIFF via tacoreader >=0.5.3); also Zenodo and Google Earth Engine"
+    official_paper: >-
+      Sci Data 2022: https://doi.org/10.1038/s41597-022-01878-2 ;
+      CloudSEN12+ (Data in Brief 2024): https://www.sciencedirect.com/science/article/pii/S2352340924008163
+    citation: >-
+      Aybar, C., Ysuhuaylas, L., Loja, J. et al. (2022). "CloudSEN12, a global dataset for semantic
+      understanding of cloud and cloud shadow in Sentinel-2." Scientific Data 9, 782.
+      https://doi.org/10.1038/s41597-022-01878-2. Extended by Aybar, C. et al. (2024), "CloudSEN12+:
+      The largest dataset of expert-labeled pixels for cloud and cloud shadow detection in Sentinel-2,"
+      Data in Brief (exact volume/article number: requires verification).
+    license: "CC0-1.0 (public domain)"
+    redistribution: "Permitted (CC0-1.0 places the data in the public domain; citation requested, not required)."
+    download_required: true
+    manual_steps:
+      - "Install tacoreader (>=0.5.3) into the project's Python 3.11 environment."
+      - "Load the dataset from Hugging Face 'tacofoundation/cloudsen12' (Cloud-Optimized GeoTIFFs)."
+      - "Select the processing level (L1C or L2A) and the high-quality (expert-labeled) label subset."
+      - "Write raw files under data/raw/cloudsen12/, then record download_date + per-file checksum here."
+    expected_directory: "raw/cloudsen12"
+    expected_size: "Large — full CloudSEN12+ is on the order of hundreds of GB (requires verification at download). A curated subset is used in Milestone 4 to fit the compute envelope (ADR-0002, Risk R-03)."
+    checksum_algorithm: "sha256"
+    checksum: "TBD"              # recorded per downloaded artifact after download
+    download_date: ""            # set at first successful download (YYYY-MM-DD)
+    download_urls: []            # none: access via tacoreader/Hugging Face, not a static URL
+    expected_files: []           # populated after the subset is selected (Milestone 4)
+    bands:
+      level_1c: "13 bands: B01,B02,B03,B04,B05,B06,B07,B08,B8A,B09,B10,B11,B12 (reflectance scale 0.0001)"
+      level_2a: "11 bands (excludes B09,B10) plus AOT and WVP layers (reflectance scale 0.0001)"
+    label_schema:
+      type: "multiclass"
+      classes:
+        0: "clear (includes snow/bright surfaces — no dedicated snow class)"
+        1: "thick_cloud"
+        2: "thin_cloud (haze approximated within this class)"
+        3: "cloud_shadow"
+    intended_use: >-
+      Primary dataset for multi-class cloud segmentation, thin-cloud/snow/bright-surface stratification
+      (O2), and the cloud-vs-bright-surface contribution (O3).
+    notes: >-
+      Verified: 4 classes as above; L1C=13 bands, L2A=11+AOT+WVP; patch sizes 509x509 and 2000x2000
+      (padded to 512/2048 for divisibility by 32); ~49,400 patches in the original release; HF version
+      1.1.2; CC0-1.0. Snow/bright surfaces are labelled "clear" and are stratified via NDSI/cirrus in M4.
+
+  on_cloud_n:
+    dataset_id: on_cloud_n
+    name: "On Cloud N: Cloud Cover Detection Challenge"
+    role: "reference_benchmark"   # retained, NOT replaced
+    version: "Competition 2021 training set — 22,728 chips (imagery captured 2018–2020)"
+    homepage: "https://www.drivendata.org/competitions/83/cloud-cover/"
+    source: "DrivenData competition 'data' tab; imagery via Microsoft Planetary Computer; custodian Radiant Earth Foundation"
+    official_paper: "No peer-reviewed paper (benchmark challenge). Benchmark write-up: https://drivendata.co/blog/cloud-cover-benchmark"
+    citation: >-
+      Radiant Earth Foundation & DrivenData (2021). "On Cloud N: Cloud Cover Detection Challenge"
+      (Sentinel-2 cloud cover dataset). Sponsored by Microsoft AI for Earth. Exact dataset DOI/citation:
+      requires verification (former Radiant MLHub host was sunset).
+    license: "DrivenData competition data-use terms; imagery from Sentinel-2 (Copernicus) via Microsoft Planetary Computer."
+    redistribution: "PROHIBITED — competition terms forbid transmitting, duplicating, publishing, or redistributing the data; use is limited to the competition's purpose and duration."
+    download_required: true
+    manual_steps:
+      - "Create a DrivenData account and open competition 83 (On Cloud N)."
+      - "Accept the competition rules / data-use agreement (required)."
+      - "Download the training features + labels from the competition 'data' tab."
+      - "Write raw files under data/raw/on_cloud_n/, then record download_date + per-file checksum here."
+    expected_directory: "raw/on_cloud_n"
+    expected_size: "≈ tens of GB for the training set (requires verification at download; 22,728 chips x 4 bands x 512x512)."
+    checksum_algorithm: "sha256"
+    checksum: "TBD"
+    download_date: ""
+    download_urls: []            # none: requires authenticated download after accepting terms
+    expected_files: []           # populated after download
+    bands:
+      provided: "4 bands from Sentinel-2 L2A: B02 (blue), B03 (green), B04 (red), B08 (NIR); one single-band GeoTIFF per band, 512x512 @ 10 m"
+      note: "No SWIR (B11/B12) or cirrus (B10) — NDSI/cirrus thin-cloud analysis is not possible on this dataset."
+    label_schema:
+      type: "binary"
+      classes:
+        0: "no_cloud"
+        1: "cloud"
+      format: "single-band 512x512 GeoTIFF per chip"
+    intended_use: >-
+      Reference benchmark to reproduce published BINARY cloud-detection results (validate pipeline
+      correctness / FR-2 oracle) and to provide a cross-dataset domain-shift check (Risk R-13).
+    notes: >-
+      Verified: 22,728 training chips (2018–2020); 4 bands [B02,B03,B04,B08] from S2 L2A; 512x512 chips;
+      binary labels as single-band GeoTIFFs; redistribution prohibited. Retained, NOT replaced by
+      CloudSEN12. Exact label pixel encoding beyond {0,1} not separately confirmed — requires verification.

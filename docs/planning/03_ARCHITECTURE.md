@@ -85,7 +85,7 @@ Cloud_Masking/
 │   │   ├── api/routers/    # FastAPI routers: train, predict, evaluate, models, history, upload, metrics, version (M13)
 │   │   ├── core/           # config, constants, logging_config, exceptions (stdlib-only skeletons at M2)
 │   │   ├── services/       # use-case orchestration (training/prediction/evaluation/change-detect)
-│   │   ├── datasets/       # CloudSEN12 loader (primary), On Cloud N loader (reference), manifest, splits
+│   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4)
 │   │   ├── preprocessing/  # band handling, normalization, spectral indices (NDSI, cirrus), augmentation
 │   │   ├── models/         # unet, attention_unet, deeplabv3plus, (segformer optional), registry
 │   │   ├── inference/      # tiled prediction, stitching, telemetry
@@ -105,7 +105,7 @@ Cloud_Masking/
 │   └── src/{components,pages,services,hooks,utils,assets}/   # + package.json, .env.example, README (M14)
 ├── docker/                 # backend/frontend Dockerfiles + docker-compose.yml (placeholders; M17)
 ├── docs/                   # planning/ · adr/ (M1); dataset/install/user/dev/deploy guides (M18)
-├── data/                   # raw/ processed/ samples/  (git-ignored contents)
+├── data/                   # raw/{cloudsen12,on_cloud_n} external/ (git-ignored) · manifests/ metadata/ samples/ (tracked)
 ├── models/                 # checkpoints/ trained weights (git-ignored)
 ├── experiments/            # curated experiment logs, ablations, metric summaries, sweeps (M7+)
 ├── notebooks/              # supplementary only — never a deliverable

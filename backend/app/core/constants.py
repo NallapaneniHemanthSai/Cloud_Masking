@@ -46,11 +46,37 @@ class Dataset(str, enum.Enum):
 class CloudClass(enum.IntEnum):
     """CloudSEN12 semantic classes (integer label values).
 
-    NOTE: exact label integers are **NOT YET VERIFIED** against the dataset (source-to-claim C-2);
-    verified in Milestone 3. These placeholders document intent only.
+    VERIFIED (2026-08-06) against the CloudSEN12 paper (Sci Data 9:782, 2022) and the CloudSEN12+
+    dataset card (Hugging Face ``tacofoundation/cloudsen12``). See data/metadata/cloudsen12_classes.md.
     """
 
     CLEAR = 0
     THICK_CLOUD = 1
     THIN_CLOUD = 2       # haze is approximated within this class (Charter §3.1)
     CLOUD_SHADOW = 3
+
+
+class OnCloudNLabel(enum.IntEnum):
+    """On Cloud N (reference benchmark) binary labels.
+
+    VERIFIED (2026-08-06) as binary cloud/no-cloud against the DrivenData competition + benchmark
+    write-up. Exact pixel encoding beyond {0,1} to be confirmed at download.
+    """
+
+    NO_CLOUD = 0
+    CLOUD = 1
+
+
+# --------------------------------------------------------------------------------------------------
+# Dataset management constants (Milestone 3). Folder names, manifest defaults, and download tunables
+# are centralised here to avoid magic numbers/strings in scripts.
+# --------------------------------------------------------------------------------------------------
+DATASET_DIRNAMES: dict[Dataset, str] = {
+    Dataset.CLOUDSEN12: "cloudsen12",
+    Dataset.ON_CLOUD_N: "on_cloud_n",
+}
+DEFAULT_MANIFEST_FILENAME: str = "datasets.yaml"
+DEFAULT_CHECKSUM_ALGORITHM: str = "sha256"
+DOWNLOAD_CHUNK_SIZE: int = 1 << 20     # 1 MiB streaming chunk for downloads/hashing
+HTTP_TIMEOUT_SECONDS: int = 60         # network timeout for download requests
+PARTIAL_DOWNLOAD_SUFFIX: str = ".part"  # temp suffix for resumable downloads

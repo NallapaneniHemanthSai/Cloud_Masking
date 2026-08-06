@@ -56,6 +56,44 @@ shared. Two datasets are retained: **CloudSEN12** (primary, multi-class) and **O
 benchmark, reproduced). Full detail and a component diagram are in
 [`docs/planning/03_ARCHITECTURE.md`](docs/planning/03_ARCHITECTURE.md).
 
+## Datasets
+
+Two datasets with distinct roles (see [ADR-0001](docs/adr/ADR-0001-dataset-selection.md)) — **On Cloud N
+is retained, not replaced**. Metadata below is **verified** against official sources
+([details](docs/datasets/)):
+
+| Role | Dataset | Bands / labels | Licence | Redistribution |
+|------|---------|----------------|---------|----------------|
+| **Primary** | **CloudSEN12 / CloudSEN12+** | 13-band S2 (L1C); multi-class 0=clear/1=thick/2=thin/3=shadow | **CC0-1.0** | Permitted |
+| **Reference benchmark** | **On Cloud N** | 4-band S2 L2A (B02,B03,B04,B08); binary 0/1 | Competition terms | **Prohibited** |
+
+**Folder layout:** `data/{raw/{cloudsen12,on_cloud_n}, external, manifests, metadata, samples}` — heavy
+contents under `raw/`/`processed/`/`external/` are git-ignored; provenance (`manifests/datasets.yaml`),
+metadata, and docs are tracked.
+
+**Download & verify (nothing downloads automatically at Milestone 3):**
+```bash
+python backend/scripts/download_cloudsen12.py --dry-run    # primary
+python backend/scripts/download_on_cloud_n.py --dry-run    # reference benchmark
+python backend/scripts/verify_datasets.py                  # structured provenance + integrity table
+```
+Scripts read `data/manifests/datasets.yaml`. Both datasets need manual/authenticated access (CloudSEN12
+via `tacoreader`/Hugging Face; On Cloud N via DrivenData registration + agreement), so the scripts
+**print the documented manual steps instead of bypassing them**.
+
+**Storage / expected size (verify at download):** CloudSEN12+ full is very large (hundreds of GB+); a
+curated subset is used (Milestone 4). On Cloud N training data is ≈ tens of GB (22,728 chips). Confirm
+disk before downloading (Risk R-03).
+
+**Workflows:**
+- *Provenance* — declare in `datasets.yaml` → verify access/licence in [`docs/datasets/`](docs/datasets/).
+- *Verification* — `verify_datasets.py` validates the manifest and prints a per-dataset status table
+  (manifest / directory / download / checksum / completeness / overall); not-yet-downloaded = `PENDING`
+  (not a failure); `--require-present` enforces presence.
+- *Checksum* — `checksum` is `TBD` until download; record `sha256` per artifact, then verification reports
+  `VERIFIED`/`MISMATCH` (vs `UNAVAILABLE`).
+- *Lifecycle* — `declare → verify access → download → record date+checksum → verify → preprocess (M4)`.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -96,13 +134,15 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 2 (Project Scaffold) complete and under review — scaffold only, no
-application logic, no installed dependencies, no datasets. Milestone 3 not yet started.
+**Current status:** Milestone 3 (Dataset Management) complete and under review — provenance manifest
+(metadata **verified against official sources**), metadata/licence docs, and download/verify scripts only.
+**No datasets are downloaded** (both require manual/authenticated access; scripts document the steps and
+never bypass agreements). No preprocessing, no ML, no installed dependencies.
 
 ```
 ✅ Milestone 1  – Planning
 ✅ Milestone 2  – Project Scaffold
-⬜ Milestone 3  – Dataset Management
+✅ Milestone 3  – Dataset Management
 ⬜ Milestone 4  – Data Preprocessing
 ⬜ Milestone 5  – Visualization
 ⬜ Milestone 6  – Baseline Model

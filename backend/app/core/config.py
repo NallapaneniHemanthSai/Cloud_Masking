@@ -40,6 +40,14 @@ def _env_path(name: str, default: Path) -> Path:
     return Path(raw).expanduser().resolve() if raw else default
 
 
+def _data_root() -> Path:
+    """Resolve the data root (``DATA_DIR`` env override or ``<project>/data``).
+
+    Kept as a helper so the dataset subdirectory fields below stay consistent with ``data_dir``.
+    """
+    return _env_path("DATA_DIR", PROJECT_ROOT / "data")
+
+
 @dataclass(frozen=True)
 class Settings:
     """Immutable application settings skeleton.
@@ -60,9 +68,21 @@ class Settings:
     log_level: str = _env("LOG_LEVEL", DEFAULT_LOG_LEVEL)
 
     # --- Data / artifact locations (never hardcoded; overridable via env) -----------------------
-    data_dir: Path = field(default_factory=lambda: _env_path("DATA_DIR", PROJECT_ROOT / "data"))
+    data_dir: Path = field(default_factory=_data_root)
     models_dir: Path = field(default_factory=lambda: _env_path("MODELS_DIR", PROJECT_ROOT / "models"))
     outputs_dir: Path = field(default_factory=lambda: _env_path("OUTPUTS_DIR", PROJECT_ROOT / "outputs"))
+
+    # --- Dataset subdirectories (Milestone 3; overridable via env) ------------------------------
+    data_raw_dir: Path = field(default_factory=lambda: _env_path("DATA_RAW_DIR", _data_root() / "raw"))
+    data_external_dir: Path = field(
+        default_factory=lambda: _env_path("DATA_EXTERNAL_DIR", _data_root() / "external")
+    )
+    data_manifests_dir: Path = field(
+        default_factory=lambda: _env_path("DATA_MANIFESTS_DIR", _data_root() / "manifests")
+    )
+    data_metadata_dir: Path = field(
+        default_factory=lambda: _env_path("DATA_METADATA_DIR", _data_root() / "metadata")
+    )
 
     # --- Experiment tracking / database (configured, not connected, at M2) ----------------------
     mlflow_tracking_uri: str = _env("MLFLOW_TRACKING_URI", "file:./outputs/mlruns")
