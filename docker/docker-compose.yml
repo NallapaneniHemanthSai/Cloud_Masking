@@ -1,0 +1,17 @@
+# Docker Compose — PLACEHOLDER (Milestone 2 scaffold).
+# Wiring (service networking, volumes, env, MLflow, healthchecks) is completed in Milestone 17.
+# Do NOT run `docker compose up` at Milestone 2 — the images are placeholders.
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    # ports/env/volumes/healthcheck added in M17
+    profiles: ["placeholder"]
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    profiles: ["placeholder"]

@@ -1,0 +1,28 @@
+# Logging configuration TEMPLATE (dictConfig schema). Milestone 2 skeleton.
+# The canonical, code-backed logging config is app/core/logging_config.py (standard-library only). This
+# YAML mirrors it for operators who prefer file-based configuration; the loader is wired in Milestone 13.
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  standard:
+    format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+    datefmt: "%Y-%m-%dT%H:%M:%S%z"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: standard
+    level: INFO
+  # File handler is defined but points under outputs/ (git-ignored). Enabled in later milestones.
+  file:
+    class: logging.handlers.RotatingFileHandler
+    formatter: standard
+    level: INFO
+    filename: ./outputs/logs/backend.log
+    maxBytes: 10485760      # 10 MB
+    backupCount: 5
+
+root:
+  handlers: [console]       # add "file" once outputs/logs exists (later milestone)
+  level: INFO

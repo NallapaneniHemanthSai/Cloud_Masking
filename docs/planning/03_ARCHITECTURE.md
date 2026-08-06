@@ -71,34 +71,50 @@ flowchart TD
     EXP -.-> MS
 ```
 
-## 2. Planned Repository Layout (built in Milestone 2, not now)
+## 2. Repository Layout (as built in Milestone 2)
+
+The Python backend is packaged under `backend/app/` (a single importable `app` package), with `configs/`,
+`scripts/`, and `tests/` alongside it under `backend/`. Data/model/output artifacts are top-level and
+git-ignored. This is the **actual** scaffold created in Milestone 2 (it refines the M1 sketch: package
+nested under `app/`, `configs`+`scripts` moved under `backend/`, and `data/models/notebooks/outputs` added).
 
 ```
 Cloud_Masking/
 ├── backend/
-│   ├── api/                # FastAPI routers: train, predict, evaluate, models, history, upload, metrics, version
-│   ├── core/               # config (Pydantic), constants, logging setup, contracts/interfaces, exceptions
-│   ├── services/           # use-case orchestration (training_service, prediction_service, ...)
-│   ├── datasets/           # CloudSEN12 loader, dataset registry, manifest, splits
-│   ├── preprocessing/      # band handling, normalization, spectral indices (NDSI, cirrus), augmentation
-│   ├── models/             # unet, attention_unet, deeplabv3plus, (segformer optional), registry
-│   ├── training/           # trainer, losses (Dice, CE), schedulers, MLflow integration
-│   ├── evaluation/         # metrics (TorchMetrics), stratified evaluator, oracle, guardrails
-│   ├── change_detection/   # change-detection task + masking-impact measurement
-│   ├── db/                 # SQLite models + migrations (model versions, metrics, predictions, history)
-│   ├── utils/              # geo utils (CRS/registration), io, seeding, reproducibility
-│   └── tests/              # unit / integration / api / model tests (pytest)
+│   ├── app/                # importable "app" package (clean-architecture core inward)
+│   │   ├── api/routers/    # FastAPI routers: train, predict, evaluate, models, history, upload, metrics, version (M13)
+│   │   ├── core/           # config, constants, logging_config, exceptions (stdlib-only skeletons at M2)
+│   │   ├── services/       # use-case orchestration (training/prediction/evaluation/change-detect)
+│   │   ├── datasets/       # CloudSEN12 loader (primary), On Cloud N loader (reference), manifest, splits
+│   │   ├── preprocessing/  # band handling, normalization, spectral indices (NDSI, cirrus), augmentation
+│   │   ├── models/         # unet, attention_unet, deeplabv3plus, (segformer optional), registry
+│   │   ├── inference/      # tiled prediction, stitching, telemetry
+│   │   ├── training/       # trainer, losses (Dice, CE), schedulers, MLflow integration
+│   │   ├── evaluation/     # metrics (TorchMetrics), stratified evaluator, oracle, guardrails
+│   │   ├── change_detection/ # change-detection task + masking-impact measurement
+│   │   ├── db/             # SQLite models + migrations (model versions, metrics, predictions, history)
+│   │   ├── schemas/        # Pydantic request/response DTOs (empty package at M2; implemented M13)
+│   │   ├── utils/          # geo utils (CRS/registration), io, seeding, reproducibility
+│   │   └── main.py         # FastAPI app factory placeholder (returns None at M2; M13)
+│   ├── tests/              # structure + import tests (M2); unit/integration/api/model from M6
+│   ├── configs/            # config.template.yaml, smoke.yaml, full.yaml, logging.yaml
+│   ├── scripts/            # download, validate, preprocess, split, stats, train, evaluate, predict, run_reference (M3+)
+│   ├── pyproject.toml      # metadata + pytest/ruff/black/mypy config (requires-python >=3.11,<3.12)
+│   ├── requirements.in · requirements-dev.in · .env.example · README.md   # lock (requirements.txt) deferred to pip-compile
 ├── frontend/
-│   └── src/{components,pages,hooks,api,assets}/
-├── docker/                 # Dockerfiles + docker-compose.yml
-├── docs/                   # planning, architecture, dataset guide, install, user & dev guides, deployment
-├── paper/                  # literature review, references, comparison tables, ablation template
-├── presentation/           # poster + slides
-├── reports/                # generated evaluation & validation reports (evidence)
-├── scripts/                # download, validate, preprocess, split, stats, train, evaluate, predict, run_reference
-├── .github/workflows/      # CI YAML (created, never auto-run)
-├── configs/                # version-pinned experiment configs + seeds
-├── pyproject.toml / requirements.txt
+│   └── src/{components,pages,services,hooks,utils,assets}/   # + package.json, .env.example, README (M14)
+├── docker/                 # backend/frontend Dockerfiles + docker-compose.yml (placeholders; M17)
+├── docs/                   # planning/ · adr/ (M1); dataset/install/user/dev/deploy guides (M18)
+├── data/                   # raw/ processed/ samples/  (git-ignored contents)
+├── models/                 # checkpoints/ trained weights (git-ignored)
+├── experiments/            # curated experiment logs, ablations, metric summaries, sweeps (M7+)
+├── notebooks/              # supplementary only — never a deliverable
+├── outputs/                # logs · mlruns · sqlite · run artifacts (git-ignored)
+├── paper/                  # literature review, references, comparison tables, ablation template (M19)
+├── presentation/           # poster + slides + demo (M20)
+├── reports/                # generated evaluation & validation reports / evidence (M8+)
+├── .github/workflows/      # CI YAML placeholders (created, manual-only until owner enables)
+├── .gitignore · .env.example
 └── README.md
 ```
 

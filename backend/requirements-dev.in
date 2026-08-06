@@ -1,0 +1,16 @@
+# Cloud Masking backend — AUTHORITATIVE development/test dependency source (hand-edited).
+# Soft constraints only; locking deferred (see requirements.in header). Milestone 2: not installed.
+-r requirements.in
+
+# --- Testing -----------------------------------------------------------------------------------
+pytest>=8.3,<9.0
+pytest-cov>=6.0,<7.0
+httpx>=0.28,<1.0            # FastAPI TestClient for API tests (from M13/M16)
+
+# --- Lint / format / type-check ----------------------------------------------------------------
+ruff>=0.8,<1.0
+black>=24.10
+mypy>=1.14,<2.0
+
+# --- Dependency locking tool (used to generate requirements*.txt in later milestones) ----------
+pip-tools>=7.4,<8.0

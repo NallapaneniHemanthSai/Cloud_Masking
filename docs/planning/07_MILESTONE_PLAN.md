@@ -54,4 +54,7 @@
 
 ## Current status
 
-- **M1: IN PROGRESS** (this deliverable set). All later milestones: **NOT STARTED**.
+- **M1: COMPLETE** (approved) — planning deliverable set + review revisions.
+- **M2: COMPLETE** (awaiting approval) — project scaffold (directories + import-clean placeholders, pinned
+  requirements on Python 3.11.x, config/logging/pytest/CI/Docker placeholders). No app logic, no installs.
+- **M3–M20: NOT STARTED.**

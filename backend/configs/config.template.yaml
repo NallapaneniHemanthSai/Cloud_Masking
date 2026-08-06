@@ -1,0 +1,57 @@
+# Cloud Masking — experiment/configuration TEMPLATE (Milestone 2 skeleton).
+#
+# This documents the full configuration surface. Concrete profiles (smoke.yaml, full.yaml) override
+# subsets of these keys. No code consumes these files yet; the loader is added in Milestone 13, mapping
+# onto the pydantic-settings model. All paths are project-relative — never hardcode absolute paths.
+
+# --- Run identity ------------------------------------------------------------------------------
+run:
+  profile: smoke                 # smoke | full
+  seed: 42                       # global RNG seed for reproducibility
+  device: auto                   # auto | cpu | mps | cuda  (auto = cuda > mps > cpu, see ADR-0002)
+
+# --- Dataset (see ADR-0001; both datasets retained) --------------------------------------------
+dataset:
+  primary: cloudsen12            # 13-band Sentinel-2, multi-class
+  reference_benchmark: on_cloud_n  # binary, 4-band; reproduced, not replaced
+  root: ./data                   # relative to project root
+  patch_size: 256                # capped for Apple-Silicon feasibility (ADR-0002)
+  num_classes: 4                 # clear / thick cloud / thin cloud / cloud shadow (verify in M3)
+
+# --- Preprocessing (implemented M4) ------------------------------------------------------------
+preprocessing:
+  normalize: per_band
+  spectral_indices: [ndsi, cirrus]   # NDSI (snow), cirrus B10 (thin cloud)
+  augmentation: true
+
+# --- Model (implemented M6/M10) ----------------------------------------------------------------
+model:
+  name: unet                     # unet | attention_unet | deeplabv3plus | segformer(optional)
+  in_channels: 13
+  encoder: null                  # backbone name where applicable
+
+# --- Training (implemented M6/M7) --------------------------------------------------------------
+training:
+  epochs: 50
+  batch_size: 8
+  grad_accum_steps: 1
+  learning_rate: 0.001
+  loss: dice_ce                  # dice | ce | dice_ce
+  optimizer: adamw
+  scheduler: cosine
+
+# --- Evaluation (implemented M8/M9) ------------------------------------------------------------
+evaluation:
+  metrics: [iou, dice, precision, recall, f1, pixel_accuracy]
+  stratify_by: [thin_cloud, snow, bright_surface]   # haze approximated within thin_cloud
+  confidence_interval: 0.95
+
+# --- Experiment tracking -----------------------------------------------------------------------
+tracking:
+  mlflow_tracking_uri: file:./outputs/mlruns
+  experiment_name: cloud_masking
+
+# --- Logging -----------------------------------------------------------------------------------
+logging:
+  level: INFO
+  config_file: ./configs/logging.yaml

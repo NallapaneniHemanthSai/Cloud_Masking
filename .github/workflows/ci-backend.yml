@@ -1,0 +1,15 @@
+# Backend CI — minimal placeholder (Milestone 2 scaffold).
+# Manual-trigger only. Real steps (install, lint, type-check, tests, coverage) are added in later
+# milestones. Not executed by the assistant; enabled/run by the repository owner.
+
+name: CI - Backend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: echo "Backend CI is a Milestone 2 placeholder; implemented in later milestones."

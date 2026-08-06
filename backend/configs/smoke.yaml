@@ -1,0 +1,18 @@
+# SMOKE profile — tiny/fast; runs anywhere and in CI. Overrides config.template.yaml.
+# Milestone 2 skeleton: values are placeholders, not yet consumed by code.
+run:
+  profile: smoke
+  seed: 42
+  device: auto
+
+dataset:
+  patch_size: 128
+  # A minimal subset is selected in Milestone 3; kept intentionally tiny here.
+
+training:
+  epochs: 2
+  batch_size: 2
+  grad_accum_steps: 1
+
+evaluation:
+  confidence_interval: 0.95

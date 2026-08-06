@@ -1,0 +1,18 @@
+# FULL profile — the AC-4 frozen resource envelope for all reported baseline-vs-candidate comparisons.
+# Milestone 2 skeleton: the envelope is FROZEN before O2 (Milestone 8), not here. These are provisional
+# placeholders to be finalised and then held constant across O2 (M8) and O3 (M11).
+run:
+  profile: full
+  seed: 42
+  device: auto
+
+dataset:
+  patch_size: 256          # capped for Apple-Silicon feasibility (ADR-0002)
+
+training:
+  epochs: 50
+  batch_size: 8
+  grad_accum_steps: 2      # effective batch 16 without exceeding MPS memory
+
+evaluation:
+  confidence_interval: 0.95

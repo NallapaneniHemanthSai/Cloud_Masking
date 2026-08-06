@@ -1,0 +1,76 @@
+# =============================================================================================
+# Cloud Masking — .gitignore
+# Ignores caches, virtualenvs, secrets, datasets, checkpoints, and run artifacts.
+# Never ignores documentation (docs/, *.md) or source code. Directory structure is preserved via
+# committed .gitkeep files (contents are ignored, the folders are kept).
+# =============================================================================================
+
+# --- Python caches / build -------------------------------------------------------------------
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.eggs/
+*.egg-info/
+build/
+dist/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.ipynb_checkpoints/
+
+# --- Virtual environments --------------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# --- Secrets / environment -------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+frontend/.env.local
+
+# --- Editor / OS -----------------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# --- Node / frontend -------------------------------------------------------------------------
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-error.log*
+
+# --- Data (keep folders via .gitkeep; ignore contents) ---------------------------------------
+data/raw/
+data/processed/
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+# data/samples/ may hold small committed sample tiles — not ignored.
+
+# --- Models / checkpoints (keep folder + README; ignore weights) -----------------------------
+models/checkpoints/
+!models/checkpoints/.gitkeep
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# --- Outputs / experiment tracking (keep folder + README; ignore artifacts) ------------------
+outputs/
+!outputs/.gitkeep
+!outputs/README.md
+mlruns/
+*.db
+*.sqlite
+*.sqlite3
+logs/
+*.log

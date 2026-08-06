@@ -1,0 +1,15 @@
+# Frontend CI — minimal placeholder (Milestone 2 scaffold).
+# Manual-trigger only. Real steps (npm ci, lint, build, test) are added in Milestone 14+.
+# Not executed by the assistant; enabled/run by the repository owner.
+
+name: CI - Frontend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: echo "Frontend CI is a Milestone 2 placeholder; implemented in Milestone 14+."

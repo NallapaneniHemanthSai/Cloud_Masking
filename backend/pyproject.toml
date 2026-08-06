@@ -1,0 +1,89 @@
+# Backend project metadata and tooling configuration.
+# Milestone 2: scaffold. Dependencies are declared abstractly here; the authoritative concrete source
+# is requirements.in (soft constraints). A pinned lock (requirements.txt) is DEFERRED and generated via
+# pip-compile once package selection stabilises in later milestones. Nothing is installed at Milestone 2.
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cloud-masking-backend"
+version = "0.2.0"
+description = "Backend for Cloud Masking Across Thin Cloud, Haze, Snow and Bright Surfaces (KL capstone)."
+readme = "README.md"
+# Python 3.11.x ONLY. See docs/adr/ADR-0004-python-runtime.md for rationale (geo/ML wheel availability,
+# stable PyTorch MPS support on Apple Silicon; host Python 3.14 is intentionally not used).
+requires-python = ">=3.11,<3.12"
+license = { text = "TBD (confirm at approval)" }
+authors = [{ name = "KL University Capstone Team" }]
+
+# Abstract runtime dependency names. The concrete, version-constrained source of truth is
+# requirements.in; the reproducible lock (requirements.txt) is generated later via pip-compile.
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "pydantic-settings",
+  "python-multipart",
+  "SQLAlchemy",
+  "torch",
+  "torchvision",
+  "torchmetrics",
+  "numpy",
+  "pandas",
+  "rasterio",
+  "opencv-python-headless",
+  "albumentations",
+  "Pillow",
+  "scikit-image",
+  "scikit-learn",
+  "mlflow",
+  "matplotlib",
+  "PyYAML",
+  "tqdm",
+  "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "httpx",
+  "ruff",
+  "black",
+  "mypy",
+]
+
+[tool.setuptools]
+packages = ["app"]
+
+# --------------------------------------------------------------------------------------------------
+# pytest: run from the backend/ directory. `pythonpath = ["."]` makes `import app` resolve; a
+# conftest.py fallback also inserts backend/ onto sys.path when invoked from the repo root.
+# --------------------------------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Kept lenient at scaffold stage; tightened as real code lands.
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
