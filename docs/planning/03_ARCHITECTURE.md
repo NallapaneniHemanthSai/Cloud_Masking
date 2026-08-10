@@ -90,7 +90,7 @@ Cloud_Masking/
 │   │   ├── visualization/  # M5: records, backends, colormap, statistics, inspection, bands, overlays, patches, plotting, reports, qc, manifest, session, exporters
 │   │   ├── models/         # M6: config, base, unet (baseline), initialization, summary, metadata, artifact, registry, factory (attention_unet/deeplabv3+ in M10)
 │   │   ├── inference/      # tiled prediction, stitching, telemetry
-│   │   ├── training/       # trainer, losses (Dice, CE), schedulers, MLflow integration
+│   │   ├── training/       # M7: config, seed, optimizer, scheduler, loss, metadata, logging, checkpoint, callbacks (events+priorities), engine, experiment, lifecycle (TrainerState), artifact (TrainingArtifact), trainer
 │   │   ├── evaluation/     # metrics (TorchMetrics), stratified evaluator, oracle, guardrails
 │   │   ├── change_detection/ # change-detection task + masking-impact measurement
 │   │   ├── db/             # SQLite models + migrations (model versions, metrics, predictions, history)
@@ -141,6 +141,7 @@ Cloud_Masking/
 - **ADR-0003** — Change-detection evaluation source (candidate OSCD). *(DEFERRED to M12)*
 - **ADR-0004** — Python runtime: pin **Python 3.11.x** (host 3.14 wheel-availability risk R-01). *(ACCEPTED)*
 - **ADR-0006** — Baseline model: **U-Net** (encoder/decoder/head), reusable for training/inference. *(ACCEPTED)*
+- **ADR-0007** — Training strategy: custom config-driven Trainer (AdamW/Cosine defaults, callbacks, checkpoints, deterministic). *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns
 

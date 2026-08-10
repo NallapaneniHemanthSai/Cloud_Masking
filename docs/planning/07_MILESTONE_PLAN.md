@@ -65,8 +65,10 @@
 - **M5: COMPLETE** (approved) — visualization & EDA: backend-independent plotting abstraction, statistics,
   inspection, JSON/CSV/Markdown reports, QC reports, colour mapping, figure specs, FigureManifest +
   VisualizationSession, `eda_report.py`, synthetic-data tests.
-- **M6: COMPLETE** (awaiting approval) — baseline model: ADR-0006 (U-Net selected), `ModelConfig`, baseline
-  U-Net (encoder/decoder/head), weight-init strategies, `ModelRegistry`/`ModelFactory`, checkpoint/experiment/
-  model metadata, parameter counting, `model_info.py`, synthetic-model tests. PyTorch guarded; no training/
-  optimisation/loss/evaluation/inference. No installs.
-- **M7–M20: NOT STARTED.**
+- **M6: COMPLETE** (approved) — baseline model: ADR-0006 (U-Net), `ModelConfig`, baseline U-Net, weight-init
+  strategies, registry/factory, checkpoint/experiment/model/artifact metadata, parameter counting, tests.
+- **M7: COMPLETE** (awaiting approval) — training engine: ADR-0007, `TrainingConfig`, config-driven
+  optimizer/scheduler/loss registries, `TrainingEngine`/`Trainer`, callbacks (checkpoint/logging/early-stop/
+  progress), `CheckpointManager`, JSON/CSV logging (MetricSink), deterministic seeding + env capture,
+  `ExperimentRun`, `train_smoke.py`, synthetic-data tests. PyTorch guarded; no evaluation/benchmark/deploy/API/UI.
+- **M8–M20: NOT STARTED.**

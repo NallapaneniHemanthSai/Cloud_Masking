@@ -27,6 +27,10 @@ class ModelError(CloudMaskingError):
     """Raised for model construction, loading, or checkpoint errors."""
 
 
+class TrainingError(CloudMaskingError):
+    """Raised for training configuration/execution/checkpoint errors."""
+
+
 class InferenceError(CloudMaskingError):
     """Raised for prediction/inference failures."""
 

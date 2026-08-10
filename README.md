@@ -159,6 +159,32 @@ python backend/scripts/model_info.py --name unet --in-channels 13 --classes 4   
 PyTorch is a guarded dependency: importing `app.models` never requires it; building a model does (clear
 `ModelError` otherwise). No weights are saved and no metrics are recorded in this milestone.
 
+## Training engine (Milestone 7)
+
+Configuration-driven `Trainer` under `backend/app/training/` — **no evaluation/benchmark/deployment code**.
+Full detail in [`docs/training/`](docs/training/) and [ADR-0007](docs/adr/ADR-0007-training-strategy.md).
+
+| Area | Module | Notes |
+|------|--------|-------|
+| Config | `config.py` | `TrainingConfig` (+ optimizer/scheduler/loss/checkpoint/logging/early-stopping) + deterministic `config_hash`. |
+| Engine/Trainer | `engine.py` / `trainer.py` | Epoch mechanics (forward/loss/backward/accumulation/AMP) + orchestration. |
+| Optimizer/Scheduler | `optimizer.py` / `scheduler.py` | Adam/AdamW/SGD; Cosine/Step/Plateau — selected by config. |
+| Loss | `loss.py` | cross-entropy / soft Dice / combined (the optimization objective). |
+| Checkpointing | `checkpoint.py` | best/latest, save policy, resume metadata (weights optional). |
+| Callbacks | `callbacks.py` | `CallbackEvent` enum dispatch + explicit `CallbackPriority` ordering; checkpoint/logging/early-stopping/progress — independent of the trainer. |
+| Lifecycle | `lifecycle.py` | `TrainerState` state machine (CREATED→INITIALIZED→RUNNING↔CHECKPOINTING→COMPLETED/FAILED). |
+| Artifact | `artifact.py` | `TrainingArtifact` — canonical completed-run metadata, deterministic `content_hash`. |
+| Logging | `logging.py` | `MetricSink` → JSONL/CSV/console (TensorBoard isolated behind the interface). |
+| Reproducibility | `seed.py` | seed + deterministic flags + environment capture + device resolution. |
+| Experiment | `experiment.py` | `ExperimentRun` + directory layout. |
+
+```bash
+python backend/scripts/train_smoke.py --epochs 2 --device cpu   # synthetic run (no real dataset)
+```
+
+The trainer takes any iterable of `(inputs, targets)` batches, so it's independent of the dataset layer;
+validation/eval metrics plug in at M8 via a callback without trainer changes.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -199,10 +225,10 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 6 (Baseline Model) complete and under review — baseline **U-Net**
-architecture (encoder/decoder/head) + model abstraction (config, registry, factory), weight-init
-strategies, and checkpoint/experiment/model metadata. **No training/optimisation/loss/evaluation/inference.**
-PyTorch is a guarded dependency; the package imports without it and errors clearly on model build.
+**Current status:** Milestone 7 (Training Engine) complete and under review — configuration-driven
+`Trainer` (optimizer/scheduler/loss registries, callbacks, checkpoint manager, JSON/CSV logging,
+deterministic seeding, experiment management). **No evaluation metrics, benchmarks, deployment, API, or
+frontend.** The trainer is decoupled from evaluation/deployment. PyTorch is a guarded dependency.
 
 ```
 ✅ Milestone 1  – Planning
@@ -211,7 +237,7 @@ PyTorch is a guarded dependency; the package imports without it and errors clear
 ✅ Milestone 4  – Data Preprocessing
 ✅ Milestone 5  – Visualization & EDA
 ✅ Milestone 6  – Baseline Model
-⬜ Milestone 7  – Training
+✅ Milestone 7  – Training Engine
 ⬜ Milestone 8  – Evaluation
 ⬜ Milestone 9  – Confusing-Case Evaluation
 ⬜ Milestone 10 – Improved Model
