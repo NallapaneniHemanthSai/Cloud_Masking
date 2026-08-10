@@ -48,6 +48,21 @@ IMPORTABLE_MODULES = [
     "app.preprocessing.augmentation",
     "app.preprocessing.raster_io",
     "app.preprocessing.pipeline",
+    "app.visualization",
+    "app.visualization.records",
+    "app.visualization.backends",
+    "app.visualization.colormap",
+    "app.visualization.statistics",
+    "app.visualization.inspection",
+    "app.visualization.bands",
+    "app.visualization.overlays",
+    "app.visualization.patches",
+    "app.visualization.plotting",
+    "app.visualization.reports",
+    "app.visualization.qc",
+    "app.visualization.manifest",
+    "app.visualization.session",
+    "app.visualization.exporters",
 ]
 
 

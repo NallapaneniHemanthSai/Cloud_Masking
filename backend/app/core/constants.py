@@ -89,6 +89,8 @@ PARTIAL_DOWNLOAD_SUFFIX: str = ".part"  # temp suffix for resumable downloads
 SUPPORTED_RASTER_EXTENSIONS: frozenset[str] = frozenset({".tif", ".tiff"})
 #: Version stamped onto generated preprocessing artifacts (patch manifests, normalization stats).
 PREPROCESSING_VERSION: str = "0.4.0"
+#: Version stamped onto generated visualization/EDA reports.
+VISUALIZATION_VERSION: str = "0.5.0"
 DEFAULT_PATCH_SIZE: int = 512          # capped further for the MPS envelope in profiles (ADR-0002)
 DEFAULT_PATCH_OVERLAP: int = 0         # pixels of overlap between adjacent patches
 DEFAULT_RANDOM_SEED: int = 42          # global reproducibility seed

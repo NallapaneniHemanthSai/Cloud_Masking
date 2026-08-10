@@ -60,7 +60,9 @@
 - **M3: COMPLETE** (approved) — dataset management: provenance manifest (`datasets.yaml`, metadata verified),
   metadata + licence docs, and resumable download / verify scripts. **No data downloaded** (scripts
   document, never bypass). No preprocessing/ML.
-- **M4: COMPLETE** (awaiting approval) — preprocessing pipeline: config, loader, validation, patching,
-  normalization, splitting, augmentation framework, dry-plan orchestration, and synthetic-data unit tests.
-  Heavy deps guarded; no models/training/inference. No installs.
-- **M5–M20: NOT STARTED.**
+- **M4: COMPLETE** (approved) — preprocessing pipeline: records, config, loader, validation, patching,
+  patch manifest, normalization, splitting, augmentation framework, orchestration + synthetic-data tests.
+- **M5: COMPLETE** (awaiting approval) — visualization & EDA: backend-independent plotting abstraction
+  (Null/Matplotlib), statistics, dataset inspection, JSON/CSV/Markdown reports, QC reports, colour mapping,
+  band/label/patch figure specs, `eda_report.py`, synthetic-data tests. matplotlib guarded; no ML. No installs.
+- **M6–M20: NOT STARTED.**

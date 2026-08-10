@@ -87,6 +87,7 @@ Cloud_Masking/
 │   │   ├── services/       # use-case orchestration (training/prediction/evaluation/change-detect)
 │   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4)
 │   │   ├── preprocessing/  # M4: records, config, loader, validation, patching, patch_manifest, normalization, splitting, augmentation, raster_io, pipeline
+│   │   ├── visualization/  # M5: records, backends, colormap, statistics, inspection, bands, overlays, patches, plotting, reports, qc, manifest, session, exporters
 │   │   ├── models/         # unet, attention_unet, deeplabv3plus, (segformer optional), registry
 │   │   ├── inference/      # tiled prediction, stitching, telemetry
 │   │   ├── training/       # trainer, losses (Dice, CE), schedulers, MLflow integration

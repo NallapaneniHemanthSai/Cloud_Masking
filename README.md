@@ -113,6 +113,32 @@ python backend/scripts/preprocess.py --dataset on_cloud_n --patch-size 256 --ove
 python backend/scripts/split_dataset.py --dataset cloudsen12 --seed 42                     # split manifest
 ```
 
+## Visualization & EDA (Milestone 5)
+
+Backend-independent visualization + exploratory analysis under `backend/app/visualization/` — **no ML
+code**. Full detail in [`docs/visualization/`](docs/visualization/).
+
+| Area | Module | Notes |
+|------|--------|-------|
+| Backends | `backends.py` | `PlotBackend` (Null / Matplotlib); `get_backend("auto")`; matplotlib guarded. |
+| Statistics | `statistics.py` | Deterministic class/dataset/patch/split summaries from records. |
+| Inspection | `inspection.py` | `DatasetInspectionReport` (samples, sizes, missing labels, duplicates, balance). |
+| Reports | `reports.py` | `Report` → **JSON / CSV / Markdown**; dataset/patch/split/preprocessing builders. |
+| QC | `qc.py` | Structured + Markdown quality-control report. |
+| Colours | `colormap.py` | Class colour mapping + legends (hex only). |
+| Figure specs | `bands.py` / `overlays.py` / `patches.py` | RGB/false-colour, ground-truth mask/overlay, patch grid. |
+| Provenance | `manifest.py` / `session.py` | `FigureManifest` (per-figure metadata, deterministic `config_hash`) and `VisualizationSession` (primary workflow object) — full JSON export/import. |
+
+```bash
+python backend/scripts/eda_report.py --dataset on_cloud_n            # EDA (json/md/csv) + QC (md)
+python backend/scripts/eda_report.py --dataset cloudsen12 --backend null   # force graceful degradation
+```
+
+`eda_report.py` produces a top-level `<dataset>_session.json` (a `VisualizationSession` aggregating the
+dataset summary, report refs, and QC report) alongside the EDA/QC reports. When matplotlib is unavailable,
+figure rendering **degrades** (writes a `*.spec.json` metadata sidecar) while all statistics/reports keep
+working.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -153,17 +179,17 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 4 (Data Preprocessing) complete and under review — preprocessing pipeline
-(loader, validation, patching, normalization, splitting, augmentation framework) with synthetic-data unit
-tests. Heavy deps (numpy/rasterio/albumentations) are guarded; **no datasets downloaded, no ML/training**,
-no installed dependencies required to import or test the package.
+**Current status:** Milestone 5 (Visualization & EDA) complete and under review — backend-independent
+visualization/EDA layer (statistics, inspection, reports in JSON/CSV/Markdown, QC reports, colour mapping,
+band/label/patch figure specs) with graceful degradation when matplotlib is absent. **No models/training,
+no ML.** Heavy deps are guarded; no installs required to import or test.
 
 ```
 ✅ Milestone 1  – Planning
 ✅ Milestone 2  – Project Scaffold
 ✅ Milestone 3  – Dataset Management
 ✅ Milestone 4  – Data Preprocessing
-⬜ Milestone 5  – Visualization
+✅ Milestone 5  – Visualization & EDA
 ⬜ Milestone 6  – Baseline Model
 ⬜ Milestone 7  – Training
 ⬜ Milestone 8  – Evaluation
