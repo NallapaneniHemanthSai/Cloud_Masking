@@ -94,6 +94,25 @@ disk before downloading (Risk R-03).
   `VERIFIED`/`MISMATCH` (vs `UNAVAILABLE`).
 - *Lifecycle* — `declare → verify access → download → record date+checksum → verify → preprocess (M4)`.
 
+## Preprocessing (Milestone 4)
+
+Modular pipeline under `backend/app/preprocessing/` — **no model/training code**. Full detail in
+[`docs/preprocessing/`](docs/preprocessing/).
+
+| Stage | Module | Notes |
+|-------|--------|-------|
+| Load / discover | `loader.py` | Layouts for CloudSEN12 + On Cloud N; graceful missing-dataset reporting. |
+| Validate | `validation.py` | Structured report: missing files, unsupported types, duplicate ids, inconsistent dimensions, corrupted metadata. |
+| Patch | `patching.py` | Deterministic grid + geotransform propagation. |
+| Normalize | `normalization.py` | Per-band minmax/zscore/percentile; clipping; nodata handling. |
+| Split | `splitting.py` | Reproducible, group-aware (leakage-resistant) train/val/test + manifest. |
+| Augment | `augmentation.py` | Registry/framework only (not applied during training here). |
+
+```bash
+python backend/scripts/preprocess.py --dataset on_cloud_n --patch-size 256 --overlap 32   # dry plan
+python backend/scripts/split_dataset.py --dataset cloudsen12 --seed 42                     # split manifest
+```
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -134,16 +153,16 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 3 (Dataset Management) complete and under review — provenance manifest
-(metadata **verified against official sources**), metadata/licence docs, and download/verify scripts only.
-**No datasets are downloaded** (both require manual/authenticated access; scripts document the steps and
-never bypass agreements). No preprocessing, no ML, no installed dependencies.
+**Current status:** Milestone 4 (Data Preprocessing) complete and under review — preprocessing pipeline
+(loader, validation, patching, normalization, splitting, augmentation framework) with synthetic-data unit
+tests. Heavy deps (numpy/rasterio/albumentations) are guarded; **no datasets downloaded, no ML/training**,
+no installed dependencies required to import or test the package.
 
 ```
 ✅ Milestone 1  – Planning
 ✅ Milestone 2  – Project Scaffold
 ✅ Milestone 3  – Dataset Management
-⬜ Milestone 4  – Data Preprocessing
+✅ Milestone 4  – Data Preprocessing
 ⬜ Milestone 5  – Visualization
 ⬜ Milestone 6  – Baseline Model
 ⬜ Milestone 7  – Training

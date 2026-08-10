@@ -37,6 +37,17 @@ IMPORTABLE_MODULES = [
     "app.datasets.integrity",
     "app.datasets.download",
     "app.datasets.verification",
+    "app.preprocessing.records",
+    "app.preprocessing.config",
+    "app.preprocessing.loader",
+    "app.preprocessing.validation",
+    "app.preprocessing.patching",
+    "app.preprocessing.patch_manifest",
+    "app.preprocessing.normalization",
+    "app.preprocessing.splitting",
+    "app.preprocessing.augmentation",
+    "app.preprocessing.raster_io",
+    "app.preprocessing.pipeline",
 ]
 
 

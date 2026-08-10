@@ -80,3 +80,50 @@ DEFAULT_CHECKSUM_ALGORITHM: str = "sha256"
 DOWNLOAD_CHUNK_SIZE: int = 1 << 20     # 1 MiB streaming chunk for downloads/hashing
 HTTP_TIMEOUT_SECONDS: int = 60         # network timeout for download requests
 PARTIAL_DOWNLOAD_SUFFIX: str = ".part"  # temp suffix for resumable downloads
+
+
+# --------------------------------------------------------------------------------------------------
+# Preprocessing constants (Milestone 4). Centralised to avoid magic numbers in the pipeline; all are
+# overridable via PreprocessingConfig / YAML — never hardcode these in modules.
+# --------------------------------------------------------------------------------------------------
+SUPPORTED_RASTER_EXTENSIONS: frozenset[str] = frozenset({".tif", ".tiff"})
+#: Version stamped onto generated preprocessing artifacts (patch manifests, normalization stats).
+PREPROCESSING_VERSION: str = "0.4.0"
+DEFAULT_PATCH_SIZE: int = 512          # capped further for the MPS envelope in profiles (ADR-0002)
+DEFAULT_PATCH_OVERLAP: int = 0         # pixels of overlap between adjacent patches
+DEFAULT_RANDOM_SEED: int = 42          # global reproducibility seed
+DEFAULT_SPLIT_RATIOS: tuple[float, float, float] = (0.7, 0.15, 0.15)  # train / val / test
+SPLIT_RATIO_TOLERANCE: float = 1e-6    # allowed deviation of ratio sum from 1.0
+DEFAULT_MANIFESTS_SPLIT_FILENAME: str = "splits.yaml"
+DEFAULT_PROCESSED_DIRNAME: str = "processed"
+
+
+class NormalizationMode(str, enum.Enum):
+    """Supported per-band normalization strategies."""
+
+    NONE = "none"            # pass-through (only nodata/clip handling)
+    MINMAX = "minmax"        # scale each band to [0, 1] using per-band min/max
+    ZSCORE = "zscore"        # (x - mean) / std per band
+    PERCENTILE = "percentile"  # clip to [p_low, p_high] per band, then scale to [0, 1]
+
+
+DEFAULT_NORMALIZATION_MODE: str = NormalizationMode.MINMAX.value
+DEFAULT_PERCENTILE_RANGE: tuple[float, float] = (2.0, 98.0)  # for PERCENTILE mode
+
+
+class AugmentationOp(str, enum.Enum):
+    """Names of the built-in augmentation operations exposed by the framework."""
+
+    FLIP = "flip"
+    ROTATE = "rotate"
+    CROP = "crop"
+    BRIGHTNESS = "brightness"
+    CONTRAST = "contrast"
+
+
+class DatasetSplit(str, enum.Enum):
+    """Canonical dataset partition names."""
+
+    TRAIN = "train"
+    VAL = "val"
+    TEST = "test"

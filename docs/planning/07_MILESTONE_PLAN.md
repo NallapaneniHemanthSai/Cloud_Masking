@@ -57,7 +57,10 @@
 - **M1: COMPLETE** (approved) — planning deliverable set + review revisions.
 - **M2: COMPLETE** (approved) — project scaffold (directories + import-clean placeholders, requirements
   sources on Python 3.11.x, config/logging/pytest/CI/Docker placeholders). No app logic, no installs.
-- **M3: COMPLETE** (awaiting approval) — dataset management: provenance manifest (`datasets.yaml`),
-  metadata + licence docs, and resumable download / verify scripts. **No data downloaded** (access marked
-  *requires verification*; scripts document, never bypass). No preprocessing/ML.
-- **M4–M20: NOT STARTED.**
+- **M3: COMPLETE** (approved) — dataset management: provenance manifest (`datasets.yaml`, metadata verified),
+  metadata + licence docs, and resumable download / verify scripts. **No data downloaded** (scripts
+  document, never bypass). No preprocessing/ML.
+- **M4: COMPLETE** (awaiting approval) — preprocessing pipeline: config, loader, validation, patching,
+  normalization, splitting, augmentation framework, dry-plan orchestration, and synthetic-data unit tests.
+  Heavy deps guarded; no models/training/inference. No installs.
+- **M5–M20: NOT STARTED.**

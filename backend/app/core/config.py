@@ -24,6 +24,7 @@ from app.core.constants import (
     DEFAULT_API_HOST,
     DEFAULT_API_PORT,
     DEFAULT_LOG_LEVEL,
+    DEFAULT_RANDOM_SEED,
     PROJECT_ROOT,
     RunProfile,
 )
@@ -89,7 +90,7 @@ class Settings:
     database_url: str = _env("DATABASE_URL", "sqlite:///./outputs/cloud_masking.db")
 
     # --- Reproducibility -----------------------------------------------------------------------
-    random_seed: int = int(_env("RANDOM_SEED", "42"))
+    random_seed: int = int(_env("RANDOM_SEED", str(DEFAULT_RANDOM_SEED)))
 
     @classmethod
     def from_env(cls) -> "Settings":

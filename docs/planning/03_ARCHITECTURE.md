@@ -86,7 +86,7 @@ Cloud_Masking/
 │   │   ├── core/           # config, constants, logging_config, exceptions (stdlib-only skeletons at M2)
 │   │   ├── services/       # use-case orchestration (training/prediction/evaluation/change-detect)
 │   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4)
-│   │   ├── preprocessing/  # band handling, normalization, spectral indices (NDSI, cirrus), augmentation
+│   │   ├── preprocessing/  # M4: records, config, loader, validation, patching, patch_manifest, normalization, splitting, augmentation, raster_io, pipeline
 │   │   ├── models/         # unet, attention_unet, deeplabv3plus, (segformer optional), registry
 │   │   ├── inference/      # tiled prediction, stitching, telemetry
 │   │   ├── training/       # trainer, losses (Dice, CE), schedulers, MLflow integration

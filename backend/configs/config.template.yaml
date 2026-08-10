@@ -18,11 +18,30 @@ dataset:
   patch_size: 256                # capped for Apple-Silicon feasibility (ADR-0002)
   num_classes: 4                 # clear / thick cloud / thin cloud / cloud shadow (verify in M3)
 
-# --- Preprocessing (implemented M4) ------------------------------------------------------------
+# --- Preprocessing (implemented M4; maps to app.preprocessing.config.PreprocessingConfig) ------
 preprocessing:
-  normalize: per_band
-  spectral_indices: [ndsi, cirrus]   # NDSI (snow), cirrus B10 (thin cloud)
-  augmentation: true
+  patch_size: 512                # square patch edge (pixels); > 0
+  overlap: 0                     # overlap between adjacent patches (0 <= overlap < patch_size)
+  normalization_mode: minmax     # none | minmax | zscore | percentile
+  augmentation_enabled: false    # framework only at M4; not applied during training here
+  random_seed: 42                # deterministic seed for splitting/shuffling
+  group_by: null                 # optional grouping key for leakage-resistant (spatial) splitting
+  nodata_value: null             # optional sentinel treated as missing during normalization
+  split_ratios:                  # must sum to 1.0
+    train: 0.70
+    val: 0.15
+    test: 0.15
+  # Augmentation framework (infrastructure only). Operations are registered in
+  # app.preprocessing.augmentation and built lazily via Albumentations when enabled.
+  augmentation:
+    operations:
+      - {name: flip, params: {p: 0.5}}
+      - {name: rotate, params: {limit: 90, p: 0.5}}
+      - {name: brightness, params: {limit: 0.2, p: 0.5}}
+      - {name: contrast, params: {limit: 0.2, p: 0.5}}
+  # NOTE: spectral indices (NDSI for snow, cirrus B10 for thin cloud) are planned but implemented in a
+  # later feature step; they are out of Milestone 4's preprocessing scope.
+  spectral_indices: [ndsi, cirrus]
 
 # --- Model (implemented M6/M10) ----------------------------------------------------------------
 model:
