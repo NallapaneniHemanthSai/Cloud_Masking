@@ -62,7 +62,11 @@
   document, never bypass). No preprocessing/ML.
 - **M4: COMPLETE** (approved) — preprocessing pipeline: records, config, loader, validation, patching,
   patch manifest, normalization, splitting, augmentation framework, orchestration + synthetic-data tests.
-- **M5: COMPLETE** (awaiting approval) — visualization & EDA: backend-independent plotting abstraction
-  (Null/Matplotlib), statistics, dataset inspection, JSON/CSV/Markdown reports, QC reports, colour mapping,
-  band/label/patch figure specs, `eda_report.py`, synthetic-data tests. matplotlib guarded; no ML. No installs.
-- **M6–M20: NOT STARTED.**
+- **M5: COMPLETE** (approved) — visualization & EDA: backend-independent plotting abstraction, statistics,
+  inspection, JSON/CSV/Markdown reports, QC reports, colour mapping, figure specs, FigureManifest +
+  VisualizationSession, `eda_report.py`, synthetic-data tests.
+- **M6: COMPLETE** (awaiting approval) — baseline model: ADR-0006 (U-Net selected), `ModelConfig`, baseline
+  U-Net (encoder/decoder/head), weight-init strategies, `ModelRegistry`/`ModelFactory`, checkpoint/experiment/
+  model metadata, parameter counting, `model_info.py`, synthetic-model tests. PyTorch guarded; no training/
+  optimisation/loss/evaluation/inference. No installs.
+- **M7–M20: NOT STARTED.**

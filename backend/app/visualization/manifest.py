@@ -7,7 +7,6 @@ serialization/deserialization and file export/import.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from dataclasses import dataclass, field
@@ -16,19 +15,12 @@ from pathlib import Path
 from typing import Any
 
 from app.core.constants import VISUALIZATION_VERSION
+from app.utils.hashing import stable_hash  # canonical deterministic hash (re-exported for callers)
 from app.visualization.records import FigureSpec, RenderResult
 
+__all__ = ["FigureManifest", "stable_hash"]
+
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
-
-
-def stable_hash(obj: Any) -> str:
-    """Return a deterministic sha256 hex digest of a JSON-serialisable object.
-
-    Keys are sorted and separators normalised so equal content always yields the same hash, regardless
-    of insertion order. Non-JSON values fall back to ``str``.
-    """
-    payload = json.dumps(obj, sort_keys=True, separators=(",", ":"), default=str)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _slug(text: str) -> str:

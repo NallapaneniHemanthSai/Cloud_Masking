@@ -88,7 +88,7 @@ Cloud_Masking/
 │   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4)
 │   │   ├── preprocessing/  # M4: records, config, loader, validation, patching, patch_manifest, normalization, splitting, augmentation, raster_io, pipeline
 │   │   ├── visualization/  # M5: records, backends, colormap, statistics, inspection, bands, overlays, patches, plotting, reports, qc, manifest, session, exporters
-│   │   ├── models/         # unet, attention_unet, deeplabv3plus, (segformer optional), registry
+│   │   ├── models/         # M6: config, base, unet (baseline), initialization, summary, metadata, artifact, registry, factory (attention_unet/deeplabv3+ in M10)
 │   │   ├── inference/      # tiled prediction, stitching, telemetry
 │   │   ├── training/       # trainer, losses (Dice, CE), schedulers, MLflow integration
 │   │   ├── evaluation/     # metrics (TorchMetrics), stratified evaluator, oracle, guardrails
@@ -140,6 +140,7 @@ Cloud_Masking/
 - **ADR-0002** — Compute environment: **Mac MPS/CPU** with config-driven device auto-detection + smoke profile. *(ACCEPTED)*
 - **ADR-0003** — Change-detection evaluation source (candidate OSCD). *(DEFERRED to M12)*
 - **ADR-0004** — Python runtime: pin **Python 3.11.x** (host 3.14 wheel-availability risk R-01). *(ACCEPTED)*
+- **ADR-0006** — Baseline model: **U-Net** (encoder/decoder/head), reusable for training/inference. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns
 

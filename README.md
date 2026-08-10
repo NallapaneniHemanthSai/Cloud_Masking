@@ -139,6 +139,26 @@ dataset summary, report refs, and QC report) alongside the EDA/QC reports. When 
 figure rendering **degrades** (writes a `*.spec.json` metadata sidecar) while all statistics/reports keep
 working.
 
+## Baseline model (Milestone 6)
+
+Baseline **U-Net** + model infrastructure under `backend/app/models/` — **no training/inference code**.
+Full detail in [`docs/models/`](docs/models/) and [ADR-0006](docs/adr/ADR-0006-baseline-model-selection.md).
+
+| Area | Module | Notes |
+|------|--------|-------|
+| Config | `config.py` | `ModelConfig` (in/out channels, depth, base channels, activation, norm) + deterministic `config_hash`. |
+| Architecture | `unet.py` / `base.py` | U-Net `Encoder`/`DecoderStage`/`SegmentationHead`; `BaseSegmentationModel` (torch-guarded). |
+| Registry/factory | `registry.py` / `factory.py` | `ModelRegistry` (aliases/tags/version) + `ModelFactory` (config→model, summary, checkpoint metadata). |
+| Init | `initialization.py` | Xavier / Kaiming / Constant / Identity + optional `InitializationReport`. |
+| Metadata | `metadata.py` / `summary.py` / `artifact.py` | `ModelMetadata` (+ capability metadata), `CheckpointMetadata`, `ExperimentMetadata`, `ModelArtifact` (canonical saved-model metadata, deterministic `content_hash`), `ModelSummary` — all JSON serialisable. |
+
+```bash
+python backend/scripts/model_info.py --name unet --in-channels 13 --classes 4   # summary + checkpoint metadata
+```
+
+PyTorch is a guarded dependency: importing `app.models` never requires it; building a model does (clear
+`ModelError` otherwise). No weights are saved and no metrics are recorded in this milestone.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -179,10 +199,10 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 5 (Visualization & EDA) complete and under review — backend-independent
-visualization/EDA layer (statistics, inspection, reports in JSON/CSV/Markdown, QC reports, colour mapping,
-band/label/patch figure specs) with graceful degradation when matplotlib is absent. **No models/training,
-no ML.** Heavy deps are guarded; no installs required to import or test.
+**Current status:** Milestone 6 (Baseline Model) complete and under review — baseline **U-Net**
+architecture (encoder/decoder/head) + model abstraction (config, registry, factory), weight-init
+strategies, and checkpoint/experiment/model metadata. **No training/optimisation/loss/evaluation/inference.**
+PyTorch is a guarded dependency; the package imports without it and errors clearly on model build.
 
 ```
 ✅ Milestone 1  – Planning
@@ -190,7 +210,7 @@ no ML.** Heavy deps are guarded; no installs required to import or test.
 ✅ Milestone 3  – Dataset Management
 ✅ Milestone 4  – Data Preprocessing
 ✅ Milestone 5  – Visualization & EDA
-⬜ Milestone 6  – Baseline Model
+✅ Milestone 6  – Baseline Model
 ⬜ Milestone 7  – Training
 ⬜ Milestone 8  – Evaluation
 ⬜ Milestone 9  – Confusing-Case Evaluation
