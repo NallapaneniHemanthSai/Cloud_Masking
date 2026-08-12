@@ -67,8 +67,12 @@
   VisualizationSession, `eda_report.py`, synthetic-data tests.
 - **M6: COMPLETE** (approved) — baseline model: ADR-0006 (U-Net), `ModelConfig`, baseline U-Net, weight-init
   strategies, registry/factory, checkpoint/experiment/model/artifact metadata, parameter counting, tests.
-- **M7: COMPLETE** (awaiting approval) — training engine: ADR-0007, `TrainingConfig`, config-driven
-  optimizer/scheduler/loss registries, `TrainingEngine`/`Trainer`, callbacks (checkpoint/logging/early-stop/
-  progress), `CheckpointManager`, JSON/CSV logging (MetricSink), deterministic seeding + env capture,
-  `ExperimentRun`, `train_smoke.py`, synthetic-data tests. PyTorch guarded; no evaluation/benchmark/deploy/API/UI.
-- **M8–M20: NOT STARTED.**
+- **M7: COMPLETE** (approved) — training engine: ADR-0007, config-driven optimizer/scheduler/loss,
+  `TrainingEngine`/`Trainer`, callbacks (events+priorities), checkpoint manager, JSON/CSV logging,
+  deterministic seeding, `ExperimentRun`, `TrainingArtifact`, `TrainerState` machine, synthetic tests.
+- **M8: COMPLETE** (awaiting approval) — evaluation: ADR-0008, confusion matrix (rows=true/cols=pred),
+  per-class + macro/micro/weighted metrics (IoU/Dice/Precision/Recall/F1/PixelAcc), explicit undefined
+  values, stratified (Overall + Clear/Thick/**Thin**/Shadow + groups), `EvaluationRunner`, JSON/CSV/MD
+  reports, `evaluate.py`, comprehensive synthetic tests (incl. batch==global aggregation). numpy guarded;
+  no model/training/inference/deploy/API/UI/benchmark. **Real-data metrics: NOT YET MEASURED.**
+- **M9–M20: NOT STARTED.**

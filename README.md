@@ -185,6 +185,28 @@ python backend/scripts/train_smoke.py --epochs 2 --device cpu   # synthetic run 
 The trainer takes any iterable of `(inputs, targets)` batches, so it's independent of the dataset layer;
 validation/eval metrics plug in at M8 via a callback without trainer changes.
 
+## Evaluation (Milestone 8)
+
+Confusion-matrix-based, **per-class-first** evaluation under `backend/app/evaluation/` — **no ML/training/
+deployment code**. Full detail in [`docs/evaluation/`](docs/evaluation/) and
+[ADR-0008](docs/adr/ADR-0008-evaluation-strategy.md).
+
+| Area | Module | Notes |
+|------|--------|-------|
+| Config | `config.py` | Binary vs multiclass modes (never mixed); deterministic `config_hash`. |
+| Confusion | `confusion.py` | Pixel-level matrix (rows=true, cols=pred); TP/FP/FN/TN; ignore label. |
+| Metrics | `metrics.py` | Per-class IoU/Dice/Precision/Recall/F1 + pixel accuracy; **explicit undefined**. |
+| Aggregation | `aggregation.py` | Macro (defined-only) / micro / weighted — accumulate stats, then compute. |
+| Runner / Stratified | `runner.py` / `stratification.py` | Accumulate → compute; Overall + Clear/Thick/**Thin**/Shadow + groups. |
+| Reports | `report.py` | JSON / CSV / Markdown (reuses the visualization Report model). |
+
+```bash
+python backend/scripts/evaluate.py --mode multiclass --split test   # SYNTHETIC demo (not real metrics)
+```
+
+**Quality guarantee:** per-class + stratified metrics are mandatory, and aggregation accumulates confusion
+statistics before computing — so a high overall score cannot conceal weak thin-cloud detection.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -225,10 +247,11 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 7 (Training Engine) complete and under review — configuration-driven
-`Trainer` (optimizer/scheduler/loss registries, callbacks, checkpoint manager, JSON/CSV logging,
-deterministic seeding, experiment management). **No evaluation metrics, benchmarks, deployment, API, or
-frontend.** The trainer is decoupled from evaluation/deployment. PyTorch is a guarded dependency.
+**Current status:** Milestone 8 (Evaluation) complete and under review — confusion-matrix-based,
+**per-class-first** evaluation (IoU/Dice/Precision/Recall/F1/PixelAccuracy; macro/micro/weighted;
+stratified; explicit undefined values). Designed so an aggregate can never hide thin-cloud failure. **No
+model/training/inference/deployment/API/frontend changes; no external benchmark comparison.** All reported
+values from synthetic tests only — **real-data metrics: NOT YET MEASURED.**
 
 ```
 ✅ Milestone 1  – Planning
@@ -238,7 +261,7 @@ frontend.** The trainer is decoupled from evaluation/deployment. PyTorch is a gu
 ✅ Milestone 5  – Visualization & EDA
 ✅ Milestone 6  – Baseline Model
 ✅ Milestone 7  – Training Engine
-⬜ Milestone 8  – Evaluation
+✅ Milestone 8  – Evaluation
 ⬜ Milestone 9  – Confusing-Case Evaluation
 ⬜ Milestone 10 – Improved Model
 ⬜ Milestone 11 – Comparison
