@@ -1,9 +1,9 @@
-"""Baseline U-Net segmentation architecture (Milestone 6).
+"""Baseline U-Net segmentation architecture (Milestone 6; refactored to shared blocks in M10).
 
-A clean, configurable U-Net with separated **encoder / decoder / head** modules and clean boundaries.
-Configurable input channels, output classes, encoder depth, base channels, activation, and normalization.
-PyTorch is guarded — importing this module never requires torch; building a model does (with a clear
-error otherwise). No training/optimisation/loss code.
+A clean, configurable U-Net with separated **encoder / decoder / head** modules. Configurable input
+channels, output classes, encoder depth, base channels, activation, and normalization. Building blocks are
+shared via :mod:`app.models.blocks` (no duplication with the Attention U-Net). PyTorch is guarded — importing
+this module never requires torch; building a model does. No training/optimisation/loss code.
 """
 
 from __future__ import annotations
@@ -11,64 +11,11 @@ from __future__ import annotations
 from app.core.exceptions import ModelError
 from app.models._torch import TORCH_AVAILABLE, nn, require_torch
 from app.models.base import BaseSegmentationModel
-from app.models.config import Activation, ModelConfig, Normalization
+from app.models.config import ModelConfig
 
 if TORCH_AVAILABLE:
 
-    def _activation(name: str):
-        return {
-            Activation.RELU.value: lambda: nn.ReLU(inplace=True),
-            Activation.LEAKY_RELU.value: lambda: nn.LeakyReLU(0.01, inplace=True),
-            Activation.GELU.value: nn.GELU,
-            Activation.ELU.value: lambda: nn.ELU(inplace=True),
-        }[name]()
-
-    def _normalization(name: str, channels: int, groups: int):
-        if name == Normalization.BATCH.value:
-            return nn.BatchNorm2d(channels)
-        if name == Normalization.GROUP.value:
-            return nn.GroupNorm(min(groups, channels), channels)
-        if name == Normalization.INSTANCE.value:
-            return nn.InstanceNorm2d(channels)
-        return nn.Identity()
-
-    class ConvBlock(nn.Module):
-        """Two (conv → norm → activation) layers, with optional dropout."""
-
-        def __init__(self, in_ch: int, out_ch: int, config: ModelConfig) -> None:
-            super().__init__()
-            layers = [
-                nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1, bias=False),
-                _normalization(config.normalization, out_ch, config.group_norm_groups),
-                _activation(config.activation),
-                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1, bias=False),
-                _normalization(config.normalization, out_ch, config.group_norm_groups),
-                _activation(config.activation),
-            ]
-            if config.dropout > 0:
-                layers.append(nn.Dropout2d(config.dropout))
-            self.block = nn.Sequential(*layers)
-
-        def forward(self, x):
-            return self.block(x)
-
-    class Encoder(nn.Module):
-        """Stem + downsampling stages; returns bottleneck and skip features."""
-
-        def __init__(self, config: ModelConfig) -> None:
-            super().__init__()
-            full = config.encoder_channels() + [config.bottleneck_channels()]
-            self.stem = ConvBlock(config.in_channels, full[0], config)
-            self.pool = nn.MaxPool2d(2)
-            self.stages = nn.ModuleList(
-                ConvBlock(full[i], full[i + 1], config) for i in range(config.encoder_depth)
-            )
-
-        def forward(self, x):
-            skips = [self.stem(x)]
-            for stage in self.stages:
-                skips.append(stage(self.pool(skips[-1])))
-            return skips[-1], skips[:-1]  # bottleneck, skip features (shallow -> deep)
+    from app.models.blocks import ConvBlock, Encoder, SegmentationHead, cat
 
     class DecoderStage(nn.Module):
         """Up-conv, concatenate the matching skip, then a conv block."""
@@ -82,21 +29,7 @@ if TORCH_AVAILABLE:
             x = self.up(x)
             if x.shape[-2:] != skip.shape[-2:]:  # guard against odd input sizes
                 x = nn.functional.interpolate(x, size=skip.shape[-2:], mode="nearest")
-            return self.block(_cat(x, skip))
-
-    class SegmentationHead(nn.Module):
-        """1x1 convolution mapping features to class logits."""
-
-        def __init__(self, in_ch: int, num_classes: int) -> None:
-            super().__init__()
-            self.head = nn.Conv2d(in_ch, num_classes, kernel_size=1)
-
-        def forward(self, x):
-            return self.head(x)
-
-    def _cat(x, skip):
-        import torch  # local import; torch guaranteed available here
-        return torch.cat([x, skip], dim=1)
+            return self.block(cat(x, skip))
 
     class UNet(BaseSegmentationModel):
         """Baseline U-Net: encoder → decoder → head. Output is per-class logits (B, C, H, W)."""

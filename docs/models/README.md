@@ -16,8 +16,11 @@ on model construction when torch is absent. Architecture decision: [ADR-0006](..
 | `initialization.py` | `InitStrategy` (Xavier/Kaiming/Constant/Identity) + selection/application. |
 | `summary.py` | `ModelSummary` + `count_parameters` / `summarize`. |
 | `metadata.py` | `ModelMetadata`, `CheckpointMetadata`, `ExperimentMetadata` (JSON serialisation). |
-| `registry.py` | `ModelRegistry` (register/lookup/aliases/tags/version + capabilities) + `default_registry`. |
-| `factory.py` | `ModelFactory` (config → model, summary, checkpoint metadata, artifact). |
+| `blocks.py` | Shared building blocks (`ConvBlock`/`Encoder`/`SegmentationHead`) reused by U-Net + Attention U-Net. |
+| `attention_unet.py` | **Improved** Attention U-Net (`build_attention_unet`); M10, [improved_model.md](improved_model.md). |
+| `comparison.py` | `ArchitectureProfile` / `ArchitectureComparison` + `profile_architecture` / `compare_architectures`. |
+| `registry.py` | `ModelRegistry` (register/lookup/aliases/tags/version + capabilities) + `default_registry` (unet + attention_unet). |
+| `factory.py` | `ModelFactory` (config → model, summary, checkpoint metadata, artifact; records per-architecture version). |
 | `artifact.py` | `ModelArtifact` — canonical saved-model metadata (no weights) + deterministic content hash. |
 
 ## Baseline architecture (U-Net)

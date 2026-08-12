@@ -157,7 +157,16 @@ python backend/scripts/model_info.py --name unet --in-channels 13 --classes 4   
 ```
 
 PyTorch is a guarded dependency: importing `app.models` never requires it; building a model does (clear
-`ModelError` otherwise). No weights are saved and no metrics are recorded in this milestone.
+`ModelError` otherwise). No weights are saved.
+
+**Improved model (Milestone 10):** **Attention U-Net** (`name="attention_unet"`, aliases `attn_unet`/`aunet`)
+is registered alongside U-Net, reusing the shared blocks and `ModelConfig`; see
+[`docs/models/improved_model.md`](docs/models/improved_model.md) and
+[ADR-0010](docs/adr/ADR-0010-improved-model-selection.md). Compare architectures (params/shapes MEASURED;
+memory/FLOPs unmeasured; performance **NOT YET MEASURED**):
+```bash
+python backend/scripts/model_compare.py --in-channels 13 --classes 4 --patch 128
+```
 
 ## Training engine (Milestone 7)
 
@@ -268,12 +277,12 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 9 (Confusing-Case Evaluation & Failure Analysis) complete and under review —
-explains *what kind of case* caused each failure (typed taxonomy with measurability), pixel- + sample-level
-error records, deterministic hard-example ranking, stratified failure summaries (thin cloud always visible),
-reports + backend-independent visualization specs. Reuses M8 primitives (no metric recomputation);
-confidence/edge/small-object categories honestly marked NOT MEASURABLE/DEFERRED. **No model/training/
-inference/deployment/API/frontend changes.** All outputs synthetic — **real-data failures: NOT YET MEASURED.**
+**Current status:** Milestone 10 (Improved Model) complete and under review — **Attention U-Net** added
+alongside the baseline U-Net (shared building blocks; same `ModelConfig`; separate `IMPROVED_MODEL_VERSION`),
+with improvement-mechanism metadata and typed **architecture comparison** records (parameters/shapes
+MEASURED; memory NOT_MEASURED; FLOPs DEFERRED). U-Net behaviour unchanged (regression verified). **No
+training/optimizer/loss/evaluation changes.** The architecture is *hypothesized* to improve thin-cloud
+discrimination — **performance NOT YET MEASURED** (awaits controlled training + evaluation).
 
 ```
 ✅ Milestone 1  – Planning
@@ -285,7 +294,7 @@ inference/deployment/API/frontend changes.** All outputs synthetic — **real-da
 ✅ Milestone 7  – Training Engine
 ✅ Milestone 8  – Evaluation
 ✅ Milestone 9  – Confusing-Case Evaluation
-⬜ Milestone 10 – Improved Model
+✅ Milestone 10 – Improved Model
 ⬜ Milestone 11 – Comparison
 ⬜ Milestone 12 – Change Detection
 ⬜ Milestone 13 – Backend API

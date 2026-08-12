@@ -73,9 +73,12 @@
 - **M8: COMPLETE** (approved) — evaluation: ADR-0008, confusion matrix, per-class + macro/micro/weighted
   metrics, explicit undefined values, stratified, `EvaluationRunner`, JSON/CSV/MD reports, `evaluate.py`,
   synthetic tests (batch==global). numpy guarded; no ML/deploy/UI/benchmark.
-- **M9: COMPLETE** (awaiting approval) — confusing-case / failure analysis: ADR-0009, typed taxonomy +
-  measurability, pixel- + sample-level error records (reuses M8 confusion — no metric recomputation),
-  deterministic ranking + dedup + top-K, stratified failure summaries (thin cloud visible), backend-
-  independent viz specs (reuses M5), JSON/CSV/MD reports, `analyze_failures.py`, comprehensive synthetic
-  tests. Confidence/edge/small-object honestly DEFERRED/NOT MEASURABLE. **Real-data failures: NOT YET MEASURED.**
-- **M10–M20: NOT STARTED.**
+- **M9: COMPLETE** (approved) — confusing-case / failure analysis: ADR-0009, taxonomy + measurability,
+  pixel/sample error records (reuses M8), deterministic ranking + dedup + top-K, stratified summaries,
+  backend-independent viz specs, reports, `analyze_failures.py`, synthetic tests.
+- **M10: COMPLETE** (awaiting approval) — improved model: ADR-0010 (Attention U-Net selected), shared
+  `blocks`, `attention_unet` registered alongside `unet` (U-Net regression verified: 29,706 params
+  unchanged), improvement-mechanism metadata, `IMPROVED_MODEL_VERSION`, typed `ArchitectureProfile`/
+  `ArchitectureComparison` (params/shapes MEASURED, memory NOT_MEASURED, FLOPs DEFERRED), `model_compare.py`,
+  synthetic tests. No training/optimizer/loss/eval changes. **Performance NOT YET MEASURED.**
+- **M11–M20: NOT STARTED.**

@@ -88,7 +88,7 @@ Cloud_Masking/
 │   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4)
 │   │   ├── preprocessing/  # M4: records, config, loader, validation, patching, patch_manifest, normalization, splitting, augmentation, raster_io, pipeline
 │   │   ├── visualization/  # M5: records, backends, colormap, statistics, inspection, bands, overlays, patches, plotting, reports, qc, manifest, session, exporters
-│   │   ├── models/         # M6: config, base, unet (baseline), initialization, summary, metadata, artifact, registry, factory (attention_unet/deeplabv3+ in M10)
+│   │   ├── models/         # M6: config, base, blocks, unet, initialization, summary, metadata, artifact, registry, factory · M10: attention_unet (improved), comparison (deeplabv3+/unet++ future)
 │   │   ├── inference/      # tiled prediction, stitching, telemetry
 │   │   ├── training/       # M7: config, seed, optimizer, scheduler, loss, metadata, logging, checkpoint, callbacks (events+priorities), engine, experiment, lifecycle (TrainerState), artifact (TrainingArtifact), trainer
 │   │   ├── evaluation/     # M8: config, confusion, metrics, aggregation, records, runner, stratification, summary, report, serialization, binary
@@ -145,6 +145,7 @@ Cloud_Masking/
 - **ADR-0007** — Training strategy: custom config-driven Trainer (AdamW/Cosine defaults, callbacks, checkpoints, deterministic). *(ACCEPTED)*
 - **ADR-0008** — Evaluation strategy: confusion-first, per-class + stratified metrics; no aggregate hides thin-cloud; undefined explicit. *(ACCEPTED)*
 - **ADR-0009** — Confusing-case analysis: taxonomy + measurability; explains failures (reuses M8); deterministic ranking; confidence deferred. *(ACCEPTED)*
+- **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips), MPS-friendly, low-risk; DeepLabV3+/UNet++ future. Performance NOT YET MEASURED. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns
 

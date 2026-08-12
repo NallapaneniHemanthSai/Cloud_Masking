@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from app.core.constants import PREPROCESSING_VERSION
+from app.core.constants import IMPROVED_MODEL_VERSION, PREPROCESSING_VERSION
 from app.core.exceptions import ModelError
 from app.models.config import ModelConfig, Normalization
 from app.models.metadata import ModelMetadata
@@ -72,10 +72,12 @@ class ModelRegistry:
 
 
 def default_registry() -> ModelRegistry:
-    """Return a registry pre-populated with the baseline architecture(s)."""
+    """Return a registry pre-populated with the baseline + improved architectures."""
     # Imported here so the registry module itself never requires torch to import.
+    from app.models.attention_unet import build_attention_unet
     from app.models.unet import build_unet
 
+    norm_values = [n.value for n in Normalization]
     registry = ModelRegistry()
     registry.register(
         "unet", build_unet,
@@ -89,8 +91,27 @@ def default_registry() -> ModelRegistry:
             supported_output_classes=[2, 4],         # binary / multi-class
             minimum_patch_size=16,                   # 2**encoder_depth for the default depth (4)
             optional_dependencies=["torch"],
-            supported_normalization=[n.value for n in Normalization],
+            supported_normalization=norm_values,
             supported_preprocessing_versions=[PREPROCESSING_VERSION],
+        ),
+    )
+    registry.register(
+        "attention_unet", build_attention_unet,
+        metadata=ModelMetadata(
+            name="attention_unet", architecture="attention_unet",
+            version=IMPROVED_MODEL_VERSION,        # separate version; does not overwrite the baseline
+            description="Improved Attention U-Net: attention gates re-weight skip features by relevance.",
+            tags=["improved", "attention", "segmentation", "cnn"],
+            aliases=["attn_unet", "aunet"],
+            supported_input_channels=[4, 13],
+            supported_output_classes=[2, 4],
+            minimum_patch_size=16,
+            optional_dependencies=["torch"],
+            supported_normalization=norm_values,
+            supported_preprocessing_versions=[PREPROCESSING_VERSION],
+            # Improvement metadata (why it is EXPECTED to improve — not a performance claim).
+            improvement_mechanism=["attention_gates", "relevance_weighted_skip_features"],
+            improves_over="unet",
         ),
     )
     return registry

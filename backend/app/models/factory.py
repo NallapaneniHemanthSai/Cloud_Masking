@@ -45,6 +45,7 @@ class ModelFactory:
         return CheckpointMetadata(
             model_id=model_id or f"{architecture}-{config.config_hash()[:8]}",
             architecture=architecture,
+            version=self.registry.metadata(architecture).version,   # baseline vs improved version
             config_hash=config.config_hash(),
             parameter_count=summary.parameter_count,
             notes=notes,
@@ -59,6 +60,7 @@ class ModelFactory:
         checkpoint = self.checkpoint_metadata(config)
         return ModelArtifact.create(
             model_id=checkpoint.model_id, architecture=checkpoint.architecture,
+            model_version=checkpoint.version,
             config_hash=config.config_hash(), checkpoint_metadata=checkpoint,
             dataset_version=dataset_version, notes=notes,
         )

@@ -11,13 +11,22 @@ Public surface:
 * Metadata: :class:`ModelMetadata`, :class:`CheckpointMetadata`, :class:`ExperimentMetadata`,
   :class:`ModelSummary`.
 * Registry/factory: :class:`ModelRegistry`, :func:`default_registry`, :class:`ModelFactory`.
-* Architecture: :func:`build_unet` (baseline U-Net).
+* Architectures: :func:`build_unet` (baseline), :func:`build_attention_unet` (improved, M10).
+* Comparison: :class:`ArchitectureProfile`, :class:`ArchitectureComparison`, :func:`profile_architecture`,
+  :func:`compare_architectures`.
 * Initialization: :class:`InitStrategy`, :func:`get_initializer`, :func:`apply_initialization`.
 * Utilities: :func:`count_parameters`, :func:`summarize`, :func:`torch_available`.
 """
 
 from app.models._torch import torch_available
 from app.models.artifact import ModelArtifact
+from app.models.attention_unet import build_attention_unet
+from app.models.comparison import (
+    ArchitectureComparison,
+    ArchitectureProfile,
+    compare_architectures,
+    profile_architecture,
+)
 from app.models.config import Activation, ModelConfig, Normalization
 from app.models.factory import ModelFactory
 from app.models.initialization import (
@@ -50,6 +59,11 @@ __all__ = [
     "default_registry",
     "ModelFactory",
     "build_unet",
+    "build_attention_unet",
+    "ArchitectureProfile",
+    "ArchitectureComparison",
+    "profile_architecture",
+    "compare_architectures",
     "InitStrategy",
     "InitializationReport",
     "get_initializer",
