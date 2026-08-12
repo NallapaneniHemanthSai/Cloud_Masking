@@ -92,6 +92,7 @@ Cloud_Masking/
 │   │   ├── inference/      # tiled prediction, stitching, telemetry
 │   │   ├── training/       # M7: config, seed, optimizer, scheduler, loss, metadata, logging, checkpoint, callbacks (events+priorities), engine, experiment, lifecycle (TrainerState), artifact (TrainingArtifact), trainer
 │   │   ├── evaluation/     # M8: config, confusion, metrics, aggregation, records, runner, stratification, summary, report, serialization, binary
+│   │   ├── failure_analysis/ # M9: taxonomy, config, records, pixel_analysis, sample_analysis, ranking, stratification, analyzer, viz_specs, report (reuses M8/M5)
 │   │   ├── change_detection/ # change-detection task + masking-impact measurement
 │   │   ├── db/             # SQLite models + migrations (model versions, metrics, predictions, history)
 │   │   ├── schemas/        # Pydantic request/response DTOs (empty package at M2; implemented M13)
@@ -143,6 +144,7 @@ Cloud_Masking/
 - **ADR-0006** — Baseline model: **U-Net** (encoder/decoder/head), reusable for training/inference. *(ACCEPTED)*
 - **ADR-0007** — Training strategy: custom config-driven Trainer (AdamW/Cosine defaults, callbacks, checkpoints, deterministic). *(ACCEPTED)*
 - **ADR-0008** — Evaluation strategy: confusion-first, per-class + stratified metrics; no aggregate hides thin-cloud; undefined explicit. *(ACCEPTED)*
+- **ADR-0009** — Confusing-case analysis: taxonomy + measurability; explains failures (reuses M8); deterministic ranking; confidence deferred. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns
 

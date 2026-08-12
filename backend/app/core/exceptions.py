@@ -39,6 +39,10 @@ class EvaluationError(CloudMaskingError):
     """Raised for evaluation/metric computation failures."""
 
 
+class FailureAnalysisError(CloudMaskingError):
+    """Raised for failure/confusing-case analysis errors (e.g., mixed splits, bad config)."""
+
+
 class GuardrailViolation(CloudMaskingError):
     """Raised when a KPI guardrail is violated (e.g., an aggregate hides a failing subgroup).
 

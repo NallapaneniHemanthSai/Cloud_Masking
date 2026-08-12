@@ -70,9 +70,12 @@
 - **M7: COMPLETE** (approved) — training engine: ADR-0007, config-driven optimizer/scheduler/loss,
   `TrainingEngine`/`Trainer`, callbacks (events+priorities), checkpoint manager, JSON/CSV logging,
   deterministic seeding, `ExperimentRun`, `TrainingArtifact`, `TrainerState` machine, synthetic tests.
-- **M8: COMPLETE** (awaiting approval) — evaluation: ADR-0008, confusion matrix (rows=true/cols=pred),
-  per-class + macro/micro/weighted metrics (IoU/Dice/Precision/Recall/F1/PixelAcc), explicit undefined
-  values, stratified (Overall + Clear/Thick/**Thin**/Shadow + groups), `EvaluationRunner`, JSON/CSV/MD
-  reports, `evaluate.py`, comprehensive synthetic tests (incl. batch==global aggregation). numpy guarded;
-  no model/training/inference/deploy/API/UI/benchmark. **Real-data metrics: NOT YET MEASURED.**
-- **M9–M20: NOT STARTED.**
+- **M8: COMPLETE** (approved) — evaluation: ADR-0008, confusion matrix, per-class + macro/micro/weighted
+  metrics, explicit undefined values, stratified, `EvaluationRunner`, JSON/CSV/MD reports, `evaluate.py`,
+  synthetic tests (batch==global). numpy guarded; no ML/deploy/UI/benchmark.
+- **M9: COMPLETE** (awaiting approval) — confusing-case / failure analysis: ADR-0009, typed taxonomy +
+  measurability, pixel- + sample-level error records (reuses M8 confusion — no metric recomputation),
+  deterministic ranking + dedup + top-K, stratified failure summaries (thin cloud visible), backend-
+  independent viz specs (reuses M5), JSON/CSV/MD reports, `analyze_failures.py`, comprehensive synthetic
+  tests. Confidence/edge/small-object honestly DEFERRED/NOT MEASURABLE. **Real-data failures: NOT YET MEASURED.**
+- **M10–M20: NOT STARTED.**

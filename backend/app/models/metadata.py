@@ -44,6 +44,9 @@ class ModelMetadata:
     optional_dependencies: list[str] = field(default_factory=list)
     supported_normalization: list[str] = field(default_factory=list)
     supported_preprocessing_versions: list[str] = field(default_factory=list)
+    # --- improvement metadata (why this architecture is expected to improve; M10) ----------------
+    improvement_mechanism: list[str] = field(default_factory=list)
+    improves_over: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -59,6 +62,8 @@ class ModelMetadata:
             "optional_dependencies": list(self.optional_dependencies),
             "supported_normalization": list(self.supported_normalization),
             "supported_preprocessing_versions": list(self.supported_preprocessing_versions),
+            "improvement_mechanism": list(self.improvement_mechanism),
+            "improves_over": self.improves_over,
         }
 
     @classmethod
@@ -76,6 +81,8 @@ class ModelMetadata:
             optional_dependencies=list(data.get("optional_dependencies", []) or []),
             supported_normalization=list(data.get("supported_normalization", []) or []),
             supported_preprocessing_versions=list(data.get("supported_preprocessing_versions", []) or []),
+            improvement_mechanism=list(data.get("improvement_mechanism", []) or []),
+            improves_over=str(data.get("improves_over", "")),
         )
 
 

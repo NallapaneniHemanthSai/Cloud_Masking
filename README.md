@@ -207,6 +207,27 @@ python backend/scripts/evaluate.py --mode multiclass --split test   # SYNTHETIC 
 **Quality guarantee:** per-class + stratified metrics are mandatory, and aggregation accumulates confusion
 statistics before computing — so a high overall score cannot conceal weak thin-cloud detection.
 
+## Failure analysis (Milestone 9)
+
+Confusing-case / failure analysis under `backend/app/failure_analysis/` — **explains** failures, does not
+repeat M8 metrics. Full detail in [`docs/failure_analysis/`](docs/failure_analysis/) and
+[ADR-0009](docs/adr/ADR-0009-confusing-case-analysis.md).
+
+| Area | Module | Notes |
+|------|--------|-------|
+| Taxonomy | `taxonomy.py` | 11 categories + **measurability** (MEASURABLE / DEFERRED / NOT MEASURABLE). |
+| Pixel/sample | `pixel_analysis.py` / `sample_analysis.py` | Per-class FN/FP/confusion (reuses M8 confusion); per-sample failures. |
+| Ranking | `ranking.py` | Deterministic order (severity→rate→count→id); dedup by sample; top-K. |
+| Stratification | `stratification.py` | By class (thin cloud visible) / error type / group. |
+| Reports / viz | `report.py` / `viz_specs.py` | JSON/CSV/MD; backend-independent confusing-case specs. |
+
+```bash
+python backend/scripts/analyze_failures.py --mode multiclass --split test   # SYNTHETIC demo
+```
+
+**Answers:** what failed, which class, FP vs FN vs class confusion, hardest samples, severity, whether
+failures concentrate in thin/thick cloud/shadow/clear, and whether cases can be visualized later.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -247,11 +268,12 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 8 (Evaluation) complete and under review — confusion-matrix-based,
-**per-class-first** evaluation (IoU/Dice/Precision/Recall/F1/PixelAccuracy; macro/micro/weighted;
-stratified; explicit undefined values). Designed so an aggregate can never hide thin-cloud failure. **No
-model/training/inference/deployment/API/frontend changes; no external benchmark comparison.** All reported
-values from synthetic tests only — **real-data metrics: NOT YET MEASURED.**
+**Current status:** Milestone 9 (Confusing-Case Evaluation & Failure Analysis) complete and under review —
+explains *what kind of case* caused each failure (typed taxonomy with measurability), pixel- + sample-level
+error records, deterministic hard-example ranking, stratified failure summaries (thin cloud always visible),
+reports + backend-independent visualization specs. Reuses M8 primitives (no metric recomputation);
+confidence/edge/small-object categories honestly marked NOT MEASURABLE/DEFERRED. **No model/training/
+inference/deployment/API/frontend changes.** All outputs synthetic — **real-data failures: NOT YET MEASURED.**
 
 ```
 ✅ Milestone 1  – Planning
@@ -262,7 +284,7 @@ values from synthetic tests only — **real-data metrics: NOT YET MEASURED.**
 ✅ Milestone 6  – Baseline Model
 ✅ Milestone 7  – Training Engine
 ✅ Milestone 8  – Evaluation
-⬜ Milestone 9  – Confusing-Case Evaluation
+✅ Milestone 9  – Confusing-Case Evaluation
 ⬜ Milestone 10 – Improved Model
 ⬜ Milestone 11 – Comparison
 ⬜ Milestone 12 – Change Detection

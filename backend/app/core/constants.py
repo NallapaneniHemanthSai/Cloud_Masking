@@ -91,12 +91,16 @@ SUPPORTED_RASTER_EXTENSIONS: frozenset[str] = frozenset({".tif", ".tiff"})
 PREPROCESSING_VERSION: str = "0.4.0"
 #: Version stamped onto generated visualization/EDA reports.
 VISUALIZATION_VERSION: str = "0.5.0"
-#: Version stamped onto model architecture artifacts (checkpoint/experiment metadata).
+#: Version stamped onto the baseline model architecture (U-Net) artifacts.
 MODEL_VERSION: str = "0.6.0"
+#: Separate version for the improved architecture (Attention U-Net) — does not overwrite the baseline.
+IMPROVED_MODEL_VERSION: str = "0.10.0"
 #: Version stamped onto training artifacts (training/checkpoint/experiment metadata).
 TRAINING_VERSION: str = "0.7.0"
 #: Version stamped onto evaluation results/reports.
 EVALUATION_VERSION: str = "0.8.0"
+#: Version stamped onto failure-analysis results/reports.
+FAILURE_ANALYSIS_VERSION: str = "0.9.0"
 DEFAULT_PATCH_SIZE: int = 512          # capped further for the MPS envelope in profiles (ADR-0002)
 DEFAULT_PATCH_OVERLAP: int = 0         # pixels of overlap between adjacent patches
 DEFAULT_RANDOM_SEED: int = 42          # global reproducibility seed
