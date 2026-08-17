@@ -93,6 +93,7 @@ Cloud_Masking/
 │   │   ├── training/       # M7: config, seed, optimizer, scheduler, loss, metadata, logging, checkpoint, callbacks (events+priorities), engine, experiment, lifecycle (TrainerState), artifact (TrainingArtifact), trainer
 │   │   ├── evaluation/     # M8: config, confusion, metrics, aggregation, records, runner, stratification, summary, report, serialization, binary
 │   │   ├── failure_analysis/ # M9: taxonomy, config, records, pixel_analysis, sample_analysis, ranking, stratification, analyzer, viz_specs, report (reuses M8/M5)
+│   │   ├── comparison/     # M11: config (single-source ComparisonConfig), guardrails (fairness), records (ModelComparisonArtifact), metrics, failures, decision, runner, viz_specs, report, serialization (reuses M7/M8/M9/M5)
 │   │   ├── change_detection/ # change-detection task + masking-impact measurement
 │   │   ├── db/             # SQLite models + migrations (model versions, metrics, predictions, history)
 │   │   ├── schemas/        # Pydantic request/response DTOs (empty package at M2; implemented M13)
@@ -145,6 +146,8 @@ Cloud_Masking/
 - **ADR-0007** — Training strategy: custom config-driven Trainer (AdamW/Cosine defaults, callbacks, checkpoints, deterministic). *(ACCEPTED)*
 - **ADR-0008** — Evaluation strategy: confusion-first, per-class + stratified metrics; no aggregate hides thin-cloud; undefined explicit. *(ACCEPTED)*
 - **ADR-0009** — Confusing-case analysis: taxonomy + measurability; explains failures (reuses M8); deterministic ranking; confidence deferred. *(ACCEPTED)*
+- **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips) alongside the baseline; reuses model abstraction; performance NOT YET MEASURED. *(ACCEPTED)*
+- **ADR-0011** — Controlled comparison: single-source `ComparisonConfig` + fairness guardrails; thin-cloud-primary decision framework; reuses M7/M8/M9; honest status labels; INCONCLUSIVE until real results. *(ACCEPTED)*
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips), MPS-friendly, low-risk; DeepLabV3+/UNet++ future. Performance NOT YET MEASURED. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns

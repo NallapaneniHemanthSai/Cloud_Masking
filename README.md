@@ -237,6 +237,32 @@ python backend/scripts/analyze_failures.py --mode multiclass --split test   # SY
 **Answers:** what failed, which class, FP vs FN vs class confusion, hardest samples, severity, whether
 failures concentrate in thin/thick cloud/shadow/clear, and whether cases can be visualized later.
 
+## Controlled comparison (Milestone 11)
+
+Controlled **baseline-vs-improved** comparison (U-Net vs Attention U-Net) under `backend/app/comparison/` —
+it **reuses** the M7 trainer, M8 evaluation, and M9 failure analysis (no second engine). Both arms are
+derived from a single `ComparisonConfig`, so the architecture is the **only** difference; fairness guardrails
+re-verify this. Full detail in [`docs/comparison/`](docs/comparison/) and
+[ADR-0011](docs/adr/ADR-0011-model-comparison.md).
+
+| Area | Module | Notes |
+|------|--------|-------|
+| Config / fairness | `config.py` / `guardrails.py` | Single-source `ComparisonConfig`; `check_fairness` fails on any non-architectural mismatch. |
+| Quality | `metrics.py` | Per-class + aggregate deltas from **M8** results; **thin cloud** surfaced (never hidden). |
+| Compute | `records.py` | Params **MEASURED**; timings; peak memory `NOT_MEASURED` on cpu/mps (never inferred). |
+| Failures | `failures.py` | Compares **M9** results; tests the thin-cloud hypothesis (only on real evidence). |
+| Decision | `decision.py` | `IMPROVED / NO_SIGNIFICANT_IMPROVEMENT / REGRESSION / COMPUTE_UNJUSTIFIED / INCONCLUSIVE`. |
+| Artifact / reports | `records.py` / `report.py` / `viz_specs.py` | `ModelComparisonArtifact` (deterministic hash); JSON/CSV/MD; M5 viz specs. |
+
+```bash
+python backend/scripts/compare_models.py --synthetic-smoke --epochs 1 --patch 16 --seeds 1 2 3
+```
+
+The `--synthetic-smoke` path trains both real architectures on synthetic tensors so the pipeline + compute
+are genuinely exercised (compute **MEASURED**), but quality is **SYNTHETIC / VALIDATION ONLY** and — with no
+real dataset present — real-data quality is **NOT YET MEASURED**, so the decision is **INCONCLUSIVE** (no
+winner is fabricated).
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -277,12 +303,15 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 10 (Improved Model) complete and under review — **Attention U-Net** added
-alongside the baseline U-Net (shared building blocks; same `ModelConfig`; separate `IMPROVED_MODEL_VERSION`),
-with improvement-mechanism metadata and typed **architecture comparison** records (parameters/shapes
-MEASURED; memory NOT_MEASURED; FLOPs DEFERRED). U-Net behaviour unchanged (regression verified). **No
-training/optimizer/loss/evaluation changes.** The architecture is *hypothesized* to improve thin-cloud
-discrimination — **performance NOT YET MEASURED** (awaits controlled training + evaluation).
+**Current status:** Milestone 11 (Controlled Comparison) complete and under review — a new `app.comparison`
+package runs a **fair** U-Net vs Attention U-Net comparison by **reusing** the M7 trainer, M8 evaluation, and
+M9 failure analysis (no second engine). Both arms are derived from one `ComparisonConfig` (architecture is the
+only difference; fairness guardrails re-verify it), quality is kept separate from compute cost, **thin cloud**
+is the primary signal, and a thin-cloud-aware decision framework returns `IMPROVED / NO_SIGNIFICANT_IMPROVEMENT
+/ REGRESSION / COMPUTE_UNJUSTIFIED / INCONCLUSIVE`. The synthetic smoke trains both real architectures
+end-to-end (compute **MEASURED**; quality **SYNTHETIC / VALIDATION ONLY**). **Real-data quality NOT YET
+MEASURED → decision INCONCLUSIVE** (no winner fabricated). U-Net / Attention U-Net behaviour unchanged
+(regressions verified).
 
 ```
 ✅ Milestone 1  – Planning
@@ -295,7 +324,7 @@ discrimination — **performance NOT YET MEASURED** (awaits controlled training 
 ✅ Milestone 8  – Evaluation
 ✅ Milestone 9  – Confusing-Case Evaluation
 ✅ Milestone 10 – Improved Model
-⬜ Milestone 11 – Comparison
+✅ Milestone 11 – Comparison
 ⬜ Milestone 12 – Change Detection
 ⬜ Milestone 13 – Backend API
 ⬜ Milestone 14 – Frontend

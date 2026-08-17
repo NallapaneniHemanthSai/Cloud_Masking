@@ -81,4 +81,11 @@
   unchanged), improvement-mechanism metadata, `IMPROVED_MODEL_VERSION`, typed `ArchitectureProfile`/
   `ArchitectureComparison` (params/shapes MEASURED, memory NOT_MEASURED, FLOPs DEFERRED), `model_compare.py`,
   synthetic tests. No training/optimizer/loss/eval changes. **Performance NOT YET MEASURED.**
-- **M11–M20: NOT STARTED.**
+- **M11: COMPLETE** (awaiting approval) — controlled comparison: ADR-0011, `app.comparison` package
+  (single-source `ComparisonConfig` + fairness guardrails, quality/compute records, thin-cloud-primary
+  decision framework, `ModelComparisonArtifact` with deterministic content hash), **reuses** the M7
+  trainer + M8 evaluation + M9 failure analysis (no second engine of any kind), `compare_models.py` CLI
+  with `--synthetic-smoke`, tests + framework-free manual harness, `COMPARISON_VERSION`. Synthetic smoke
+  runs both real architectures end-to-end (compute **MEASURED**; quality **SYNTHETIC / VALIDATION ONLY**).
+  **Real-data quality NOT YET MEASURED → decision INCONCLUSIVE** (no winner fabricated).
+- **M12–M20: NOT STARTED.**
