@@ -3,6 +3,10 @@
 > **Deliverable ID:** D1 (partial) / D5 (plan) · **Milestone:** M1 · **Status:** DRAFT for approval
 > **All baseline and achieved values below are `NOT YET MEASURED`.** They are populated only from our own
 > runs, in Milestones 7–11 (baselines/O2) and 10–11 (candidate/O3), never fabricated.
+> **Prerequisite (M12):** these KPIs can only be populated once a real experimental dataset passes the M12
+> `is_experiment_ready()` gate (verified files/checksums/labels, disjoint scene-grouped splits, thin-cloud
+> present, train-only normalization). M12 delivered that gate but the real dataset is currently
+> **NOT PRESENT**, so every value below remains **NOT YET MEASURED** — M12 changed no KPI value.
 
 ---
 

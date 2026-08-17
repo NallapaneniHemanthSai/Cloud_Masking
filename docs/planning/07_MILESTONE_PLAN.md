@@ -88,4 +88,14 @@
   with `--synthetic-smoke`, tests + framework-free manual harness, `COMPARISON_VERSION`. Synthetic smoke
   runs both real architectures end-to-end (compute **MEASURED**; quality **SYNTHETIC / VALIDATION ONLY**).
   **Real-data quality NOT YET MEASURED → decision INCONCLUSIVE** (no winner fabricated).
-- **M12–M20: NOT STARTED.**
+- **M12: COMPLETE** (awaiting approval) — experimental-dataset readiness pipeline: ADR-0012, `app.datasets`
+  M12 modules (experimental config, availability, typed records, validation gates, deterministic subset,
+  group-aware split manifest, real class distribution + train-only normalization, `DatasetArtifact` with
+  deterministic content hash, `is_experiment_ready()` gate + M11 handoff, orchestration, synthetic fixture),
+  **reuses** M3 integrity + M4 splitting/patching/normalization + M5 statistics (no second downloader/
+  validator/splitter), `prepare_dataset.py` / `validate_dataset.py` CLIs, tests + framework-free manual
+  harness, `DATASET_MANIFEST_VERSION`. Synthetic fixture validates the whole pipeline (PIPELINE VALIDATION
+  ONLY). **Real CloudSEN12 NOT PRESENT (rasterio/tacoreader absent; no download performed) → readiness gate
+  = False; real model quality NOT YET MEASURED.** No M11 change.
+- **M13–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
+  original plan's "Change detection" work follows in a later milestone.)*

@@ -103,6 +103,8 @@ EVALUATION_VERSION: str = "0.8.0"
 FAILURE_ANALYSIS_VERSION: str = "0.9.0"
 #: Version stamped onto controlled model-comparison records/artifacts (baseline vs improved).
 COMPARISON_VERSION: str = "0.11.0"
+#: Version stamped onto experimental-dataset records/manifests/artifacts (dataset readiness pipeline).
+DATASET_MANIFEST_VERSION: str = "0.12.0"
 DEFAULT_PATCH_SIZE: int = 512          # capped further for the MPS envelope in profiles (ADR-0002)
 DEFAULT_PATCH_OVERLAP: int = 0         # pixels of overlap between adjacent patches
 DEFAULT_RANDOM_SEED: int = 42          # global reproducibility seed

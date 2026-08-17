@@ -9,6 +9,7 @@ is verified against official sources (see each doc's "Sources"); anything unconf
 | [`licenses.md`](licenses.md) | Licences, redistribution limits, citation requirements, usage restrictions (verified). |
 | [`cloudsen12.md`](cloudsen12.md) | CloudSEN12 (primary) — versions, classes, bands, access, licence, citation. |
 | [`on_cloud_n.md`](on_cloud_n.md) | On Cloud N (reference benchmark) — bands, labels, access, terms, citation. |
+| [`experimental_pipeline.md`](experimental_pipeline.md) | **M12** experimental-dataset readiness pipeline — acquisition lifecycle, validation gates, subset/split/normalization, readiness state machine, artifact, M11 handoff (with Mermaid diagrams). |
 
 Metadata tables (bands, resolutions, class/label definitions) live in
 [`../../data/metadata/`](../../data/metadata/); machine-readable provenance is in

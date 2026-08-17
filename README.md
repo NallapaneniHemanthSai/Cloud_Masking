@@ -263,6 +263,33 @@ are genuinely exercised (compute **MEASURED**), but quality is **SYNTHETIC / VAL
 real dataset present — real-data quality is **NOT YET MEASURED**, so the decision is **INCONCLUSIVE** (no
 winner is fabricated).
 
+## Experimental dataset pipeline (Milestone 12)
+
+Experimental-dataset **readiness** pipeline under `backend/app/datasets/` — it takes the project from
+*"dataset infrastructure exists"* to *"a verified, reproducible, legally usable, locally available
+experimental dataset exists"* (or an honest `NOT_PRESENT`). It **reuses** M3 integrity, M4 splitting/
+patching/normalization, and M5 statistics (no second downloader/validator/splitter). Full detail in
+[`docs/datasets/experimental_pipeline.md`](docs/datasets/experimental_pipeline.md) and
+[ADR-0012](docs/adr/ADR-0012-experimental-dataset-and-data-pipeline.md).
+
+| Area | Module | Notes |
+|------|--------|-------|
+| Availability | `availability.py` | Local-FS only — PRESENT / PARTIAL / NOT_PRESENT (never downloads). |
+| Validation | `validation_gates.py` | Files / SHA-256 / labels / dimensions / completeness → `DatasetValidationReport`. |
+| Subset / split | `sampling.py` | Deterministic subset (guarantees thin cloud) + **group-aware, leakage-free** split. |
+| Normalization | `dataset_statistics.py` | Fitted on **train only**; class distribution surfaces thin cloud. |
+| Artifact / gate | `artifact.py` / `readiness.py` | `DatasetArtifact` (deterministic hash) + `is_experiment_ready()` + M11 handoff. |
+
+```bash
+python backend/scripts/validate_dataset.py --dataset cloudsen12
+python backend/scripts/prepare_dataset.py --dataset cloudsen12 --synthetic-smoke --subset 24 --seed 1
+```
+
+The `--synthetic-smoke` path runs the whole pipeline on a **SYNTHETIC / PIPELINE-VALIDATION-ONLY** fixture
+(no rasterio needed). Real CloudSEN12 is currently **NOT PRESENT** (rasterio/tacoreader not installed; the
+pipeline never downloads), so the readiness gate is **False** and real model quality stays **NOT YET
+MEASURED**. This is a dataset milestone — it claims no benchmark scores.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -303,15 +330,16 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 11 (Controlled Comparison) complete and under review — a new `app.comparison`
-package runs a **fair** U-Net vs Attention U-Net comparison by **reusing** the M7 trainer, M8 evaluation, and
-M9 failure analysis (no second engine). Both arms are derived from one `ComparisonConfig` (architecture is the
-only difference; fairness guardrails re-verify it), quality is kept separate from compute cost, **thin cloud**
-is the primary signal, and a thin-cloud-aware decision framework returns `IMPROVED / NO_SIGNIFICANT_IMPROVEMENT
-/ REGRESSION / COMPUTE_UNJUSTIFIED / INCONCLUSIVE`. The synthetic smoke trains both real architectures
-end-to-end (compute **MEASURED**; quality **SYNTHETIC / VALIDATION ONLY**). **Real-data quality NOT YET
-MEASURED → decision INCONCLUSIVE** (no winner fabricated). U-Net / Attention U-Net behaviour unchanged
-(regressions verified).
+**Current status:** Milestone 12 (Experimental Dataset & Data Pipeline) complete and under review — a new
+`app.datasets` readiness pipeline turns *"dataset infrastructure exists"* into a *"verified, reproducible,
+legally usable, locally available experimental dataset"* (or an honest `NOT_PRESENT`), **reusing** M3
+integrity, M4 splitting/patching/normalization, and M5 statistics. It provides availability + structured
+validation, a deterministic curated subset, a **group-aware leakage-free** split, **train-only**
+normalization, a thin-cloud-surfaced class distribution, a `DatasetArtifact` (deterministic hash), an
+`is_experiment_ready()` gate, and an M11 handoff. A labelled **SYNTHETIC / PIPELINE-VALIDATION-ONLY** fixture
+exercises the whole pipeline. **Real CloudSEN12 is NOT PRESENT** (rasterio/tacoreader not installed; the
+pipeline never downloads) → readiness gate **False**; **real model quality NOT YET MEASURED**. M11 comparison
+logic unchanged.
 
 ```
 ✅ Milestone 1  – Planning
@@ -325,7 +353,7 @@ MEASURED → decision INCONCLUSIVE** (no winner fabricated). U-Net / Attention U
 ✅ Milestone 9  – Confusing-Case Evaluation
 ✅ Milestone 10 – Improved Model
 ✅ Milestone 11 – Comparison
-⬜ Milestone 12 – Change Detection
+✅ Milestone 12 – Experimental Dataset & Data Pipeline
 ⬜ Milestone 13 – Backend API
 ⬜ Milestone 14 – Frontend
 ⬜ Milestone 15 – Integration

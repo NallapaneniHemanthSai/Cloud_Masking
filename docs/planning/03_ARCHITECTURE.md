@@ -85,7 +85,7 @@ Cloud_Masking/
 │   │   ├── api/routers/    # FastAPI routers: train, predict, evaluate, models, history, upload, metrics, version (M13)
 │   │   ├── core/           # config, constants, logging_config, exceptions (stdlib-only skeletons at M2)
 │   │   ├── services/       # use-case orchestration (training/prediction/evaluation/change-detect)
-│   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4)
+│   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4); M12: experimental_config, availability, records, validation_gates, sampling, dataset_statistics, artifact, readiness, pipeline, synthetic (reuses M3/M4/M5; M11 handoff)
 │   │   ├── preprocessing/  # M4: records, config, loader, validation, patching, patch_manifest, normalization, splitting, augmentation, raster_io, pipeline
 │   │   ├── visualization/  # M5: records, backends, colormap, statistics, inspection, bands, overlays, patches, plotting, reports, qc, manifest, session, exporters
 │   │   ├── models/         # M6: config, base, blocks, unet, initialization, summary, metadata, artifact, registry, factory · M10: attention_unet (improved), comparison (deeplabv3+/unet++ future)
@@ -148,6 +148,7 @@ Cloud_Masking/
 - **ADR-0009** — Confusing-case analysis: taxonomy + measurability; explains failures (reuses M8); deterministic ranking; confidence deferred. *(ACCEPTED)*
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips) alongside the baseline; reuses model abstraction; performance NOT YET MEASURED. *(ACCEPTED)*
 - **ADR-0011** — Controlled comparison: single-source `ComparisonConfig` + fairness guardrails; thin-cloud-primary decision framework; reuses M7/M8/M9; honest status labels; INCONCLUSIVE until real results. *(ACCEPTED)*
+- **ADR-0012** — Experimental dataset & data pipeline: CloudSEN12+ primary (multiclass); On Cloud N reference-only (redistribution prohibited); deterministic curated subset + group-aware split + train-only normalization; readiness gate + M11 handoff; reuses M3/M4/M5; NOT PRESENT until data fetched. *(ACCEPTED)*
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips), MPS-friendly, low-risk; DeepLabV3+/UNet++ future. Performance NOT YET MEASURED. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns
