@@ -114,5 +114,16 @@
   (no httpx). All API-produced results are **SYNTHETIC / VALIDATION ONLY**; the M11 MIXED conclusion and the
   cloud-shadow regression are untouched. Verified: 15 API tests + live uvicorn smoke (Swagger live);
   M11 (23) / M12 (18) / import (100) / structure regressions still green.
-- **M14–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
+- **M14: COMPLETE** (awaiting approval) — Frontend: ADR-0014, React 18 + TypeScript 5 (strict) + Vite 6 SPA
+  under `frontend/src` (services/apiClient+api+types, hooks, SystemContext, components, 10 pages: Dashboard,
+  Models, Predict, Evaluate, Comparison, Upload, History, Metrics, MapViewer, SystemHealth). A **centralized
+  typed axios client** consumes the M13 API via a **Vite same-origin proxy** (no backend/CORS change; backend
+  untouched in M14). Reuses the **M5 CloudSEN12 palette** verbatim; explicit loading/error/empty states;
+  every `/train`+`/evaluate` result badged **SYNTHETIC**; the Comparison page shows the **REAL bounded**
+  result with the **MIXED** conclusion preserved (cited from the report, not reinterpreted); mask
+  rendering/geo-overlay **DEFERRED** (no fabricated masks). Verified: `npm install` + `tsc --noEmit` + `vite
+  build` clean; live backend+Vite integration smoke (proxy → all endpoints 200); **real browser render** of
+  Dashboard/Models/Comparison/Evaluate with live data + a live `POST /evaluate` round-trip. M11 (23) / M12
+  (18) / M13 (15) regressions still green.
+- **M15–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
   original plan's "Change detection" work follows in a later milestone.)*

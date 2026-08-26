@@ -315,6 +315,29 @@ All results produced **through the API are SYNTHETIC / VALIDATION ONLY** — the
 real-data metrics, and the bounded M11 **MIXED** conclusion (incl. the cloud-shadow regression) is untouched.
 Tests are framework-free (no `httpx`); the DB lives under git-ignored `outputs/`.
 
+## Frontend (Milestone 14)
+
+A **React 18 + TypeScript 5 + Vite 6** single-page app under `frontend/` drives the M13 API's core flows —
+Dashboard, Models, Predict, Evaluate, **Comparison**, Upload, History, Metrics, Map, System. It consumes the
+API through a **centralized typed axios client** and a **Vite same-origin proxy** (`/api/*` → backend), so the
+backend needs **no CORS change** ([ADR-0014](docs/adr/ADR-0014-frontend.md),
+[`frontend/README.md`](frontend/README.md)).
+
+- Reuses the **M5 CloudSEN12 palette** verbatim; explicit loading / error / empty states everywhere.
+- Every `/train` + `/evaluate` result is badged **SYNTHETIC**; per-class IoU surfaces **thin cloud** (primary)
+  and **cloud shadow** (trade-off), with `undefined` preserved (never 0).
+- The **Comparison** page shows the **REAL bounded** experiment with the **MIXED** conclusion transcribed
+  from the report — no metric invented, no reinterpretation. Pixel-mask rendering / geo-overlay are
+  **DEFERRED** (the API returns class counts, not mask pixels; no mask is fabricated).
+
+```bash
+cd frontend && npm install && npm run dev        # http://127.0.0.1:5173 (proxies /api -> backend :8000)
+```
+
+Verified: `npm install` + `tsc --noEmit` + `vite build` clean; a live backend+Vite integration smoke (proxy →
+all endpoints 200); and a **real browser render** of the Dashboard/Models/Comparison/Evaluate pages with live
+data, including a live `POST /evaluate` round-trip. `node_modules/` and `dist/` are git-ignored.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -355,10 +378,13 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** **Milestone 13 (Backend API) complete** — a FastAPI backend (all endpoints + Swagger,
-SQLite persistence, telemetry) now exposes the M6–M12 capabilities as a thin service layer; API-produced
-results are SYNTHETIC / VALIDATION ONLY (see the Backend API section above). Previously, the **first real
-experiment** was executed: a bounded, reproducible **CloudSEN12+** subset (32
+**Current status:** **Milestone 14 (Frontend) complete** — a React/TypeScript/Vite SPA (`frontend/`) now drives
+the M13 API's core flows (dashboard, models, prediction, evaluation, comparison, upload, history, metrics,
+map, system) via a centralized typed client + Vite proxy; it reuses the M5 palette, labels every synthetic
+result, and preserves the M11 **MIXED** conclusion (build + live browser render verified). Earlier, **Milestone
+13 (Backend API)** exposed the M6–M12 capabilities as a FastAPI service layer (SQLite + telemetry; results
+SYNTHETIC / VALIDATION ONLY). Previously, the **first real experiment** was executed: a bounded, reproducible
+**CloudSEN12+** subset (32
 expert-labelled L1C samples, CC0) was acquired via **tacoreader 0.6.5** into git-ignored `data/raw/`, passed
 the M12 `is_experiment_ready()` gate (**READY**: validated, checksummed, ROI/scene-grouped leakage-free split
 24→22/5/5, thin cloud in every split, train-only normalization), and drove the **real M11** U-Net vs
@@ -386,7 +412,7 @@ remain separately labelled SYNTHETIC.
 ✅ Milestone 11 – Comparison
 ✅ Milestone 12 – Experimental Dataset & Data Pipeline
 ✅ Milestone 13 – Backend API
-⬜ Milestone 14 – Frontend
+✅ Milestone 14 – Frontend
 ⬜ Milestone 15 – Integration
 ⬜ Milestone 16 – Testing
 ⬜ Milestone 17 – Docker

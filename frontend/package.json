@@ -1,15 +1,15 @@
 {
   "name": "cloud-masking-frontend",
   "private": true,
-  "version": "0.2.0",
-  "description": "PLACEHOLDER (Milestone 2 scaffold) — React + TypeScript + Vite frontend for the Cloud Masking capstone. Dependencies are declared but NOT installed at this milestone; the real Vite app is scaffolded in Milestone 14.",
+  "version": "0.14.0",
+  "description": "React + TypeScript + Vite frontend for the Cloud Masking capstone (Milestone 14). Talks to the M13 FastAPI backend via a centralized typed API client. Synthetic/DEMO results are always labelled.",
   "type": "module",
   "scripts": {
-    "//": "Scripts are placeholders until Milestone 14 (Frontend).",
-    "dev": "echo \"Frontend is scaffold-only at Milestone 2; implemented in Milestone 14.\" && exit 0",
-    "build": "echo \"Frontend build is implemented in Milestone 14.\" && exit 0",
-    "lint": "echo \"Lint config added in Milestone 14.\" && exit 0",
-    "test": "echo \"Frontend tests added in Milestone 14/16.\" && exit 0"
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^18.3.1",

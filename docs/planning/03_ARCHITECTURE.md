@@ -104,8 +104,8 @@ Cloud_Masking/
 │   ├── scripts/            # download, validate, preprocess, split, stats, train, evaluate, predict, run_reference (M3+)
 │   ├── pyproject.toml      # metadata + pytest/ruff/black/mypy config (requires-python >=3.11,<3.12)
 │   ├── requirements.in · requirements-dev.in · .env.example · README.md   # lock (requirements.txt) deferred to pip-compile
-├── frontend/
-│   └── src/{components,pages,services,hooks,utils,assets}/   # + package.json, .env.example, README (M14)
+├── frontend/               # M14: React18+TS5(strict)+Vite6 SPA (index.html, vite.config.ts w/ /api proxy, tsconfig)
+│   └── src/                # services/{apiClient,api,types} · hooks · context/SystemContext · components/{Layout,ui,ClassViz} · pages/(10) · utils/{colors=M5 palette,format} · data/realComparison (cited)
 ├── docker/                 # backend/frontend Dockerfiles + docker-compose.yml (placeholders; M17)
 ├── docs/                   # planning/ · adr/ (M1); dataset/install/user/dev/deploy guides (M18)
 ├── data/                   # raw/{cloudsen12,on_cloud_n} external/ (git-ignored) · manifests/ metadata/ samples/ (tracked)
@@ -150,6 +150,7 @@ Cloud_Masking/
 - **ADR-0011** — Controlled comparison: single-source `ComparisonConfig` + fairness guardrails; thin-cloud-primary decision framework; reuses M7/M8/M9; honest status labels; INCONCLUSIVE until real results. *(ACCEPTED)*
 - **ADR-0012** — Experimental dataset & data pipeline: CloudSEN12+ primary (multiclass); On Cloud N reference-only (redistribution prohibited); deterministic curated subset + group-aware split + train-only normalization; readiness gate + M11 handoff; reuses M3/M4/M5; NOT PRESENT until data fetched. *(ACCEPTED)*
 - **ADR-0013** — Backend API: FastAPI (thin adapter over `services`) + SQLite (SQLAlchemy 2.0) + telemetry; endpoints reuse M6–M12 (no domain logic/duplication); bounded synthetic training/eval via the API; import-clean app factory; no auth/queues/Postgres (deferred). *(ACCEPTED)*
+- **ADR-0014** — Frontend: React/TS/Vite SPA; centralized typed axios client consumes the M13 API via a Vite same-origin proxy (no backend/CORS change); reuse M5 palette; SYNTHETIC/REAL/DEMO/DEFERRED labelling; MIXED conclusion preserved; no fabricated masks; low dependency overhead (no state lib/UI kit). *(ACCEPTED)*
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips), MPS-friendly, low-risk; DeepLabV3+/UNet++ future. Performance NOT YET MEASURED. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns
