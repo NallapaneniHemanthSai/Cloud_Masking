@@ -157,3 +157,55 @@ export interface HistoryResponse {
   evaluations: Record<string, unknown>[];
   uploads: Record<string, unknown>[];
 }
+
+// --- integration / degraded mode / lineage (M15) ------------------------------------------------
+export interface SystemEvent {
+  event_id: string;
+  kind: string;
+  reason: string;
+  subject: string;
+  resolved: boolean;
+  resolves_event_id?: string | null;
+  created_at?: string | null;
+  evidence?: Record<string, unknown>;
+}
+
+export interface StatusResponse {
+  status: string;
+  degraded: boolean;
+  active_degraded_events: SystemEvent[];
+  event_count: number;
+  lineage_count: number;
+}
+
+export interface LineageResponse {
+  nodes: Record<string, unknown>[];
+}
+
+export interface PipelineRequest {
+  seed: number;
+  with_prediction: boolean;
+  inject_guardrail_failure: boolean;
+}
+
+export interface PipelineResponse {
+  data_regime: string;
+  guardrail_passed: boolean;
+  guardrail_reasons: string[];
+  degraded_event: SystemEvent | null;
+  status: StatusResponse;
+  lineage: Record<string, unknown>[];
+  evaluation: Record<string, unknown>;
+  prediction: Record<string, unknown> | null;
+  note: string;
+}
+
+export interface RecoverResponse {
+  event_id: string;
+  kind: string;
+  subject: string;
+  reason: string;
+  resolved: boolean;
+  resolves_event_id?: string | null;
+  created_at?: string | null;
+}

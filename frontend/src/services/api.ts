@@ -5,10 +5,15 @@ import type {
   EvaluateResponse,
   HealthResponse,
   HistoryResponse,
+  LineageResponse,
   MetricsResponse,
   ModelsResponse,
+  PipelineRequest,
+  PipelineResponse,
   PredictRequest,
   PredictResponse,
+  RecoverResponse,
+  StatusResponse,
   TrainRequest,
   TrainResponse,
   UploadResponse,
@@ -46,3 +51,17 @@ export const postUpload = (file: File) => {
     .post<UploadResponse>('/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } })
     .then((r) => r.data);
 };
+
+// --- integration / degraded mode / lineage (M15) ------------------------------------------------
+export const getStatus = () =>
+  apiClient.get<StatusResponse>('/status').then((r) => r.data);
+
+export const getLineage = (limit = 100) =>
+  apiClient.get<LineageResponse>('/lineage', { params: { limit } }).then((r) => r.data);
+
+export const runPipeline = (body: Partial<PipelineRequest>) =>
+  apiClient.post<PipelineResponse>('/pipeline', body).then((r) => r.data);
+
+export const recoverEvent = (eventId: string, note = '') =>
+  apiClient.post<RecoverResponse>(`/recover/${encodeURIComponent(eventId)}`, null, { params: { note } })
+    .then((r) => r.data);

@@ -148,3 +148,50 @@ class UploadRow(Base):
                 "content_hash": self.content_hash, "size_bytes": self.size_bytes, "path": self.path,
                 "content_type": self.content_type,
                 "created_at": self.created_at.isoformat() if self.created_at else None}
+
+
+class LineageRow(Base):
+    """A node in the artifact lineage chain (M15 / NT-5). Idempotent by ``lineage_id`` (content-derived)."""
+
+    __tablename__ = "lineage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    lineage_id: Mapped[str] = mapped_column(String(64), index=True, unique=True)
+    artifact_type: Mapped[str] = mapped_column(String(48), index=True)   # dataset|prediction|evaluation|pipeline
+    artifact_ref: Mapped[str] = mapped_column(String(128), default="")   # the domain id it describes
+    content_hash: Mapped[str] = mapped_column(String(64), index=True)
+    parent_lineage_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    inputs: Mapped[str] = mapped_column(Text, default="{}")              # JSON: versions/hashes that produced it
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    def to_dict(self) -> dict[str, Any]:
+        import json
+        return {"id": self.id, "lineage_id": self.lineage_id, "artifact_type": self.artifact_type,
+                "artifact_ref": self.artifact_ref, "content_hash": self.content_hash,
+                "parent_lineage_id": self.parent_lineage_id, "inputs": json.loads(self.inputs or "{}"),
+                "notes": self.notes,
+                "created_at": self.created_at.isoformat() if self.created_at else None}
+
+
+class SystemEventRow(Base):
+    """A degraded-mode or recovery event (M15) — the retained recovery evidence (FR-7 / NFR-6)."""
+
+    __tablename__ = "system_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    event_id: Mapped[str] = mapped_column(String(64), index=True, unique=True)
+    kind: Mapped[str] = mapped_column(String(16), index=True)            # DEGRADED | RECOVERY
+    reason: Mapped[str] = mapped_column(Text, default="")
+    subject: Mapped[str] = mapped_column(String(128), default="")        # what is affected
+    evidence: Mapped[str] = mapped_column(Text, default="{}")            # JSON
+    resolved: Mapped[bool] = mapped_column(default=False)
+    resolves_event_id: Mapped[str | None] = mapped_column(String(64), nullable=True)  # RECOVERY -> DEGRADED
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow)
+
+    def to_dict(self) -> dict[str, Any]:
+        import json
+        return {"id": self.id, "event_id": self.event_id, "kind": self.kind, "reason": self.reason,
+                "subject": self.subject, "evidence": json.loads(self.evidence or "{}"),
+                "resolved": self.resolved, "resolves_event_id": self.resolves_event_id,
+                "created_at": self.created_at.isoformat() if self.created_at else None}

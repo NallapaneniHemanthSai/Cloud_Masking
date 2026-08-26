@@ -24,6 +24,7 @@ def create_app() -> Any:
         history,
         models,
         prediction,
+        status,
         system,
         training,
         upload,
@@ -71,7 +72,7 @@ def create_app() -> Any:
         return JSONResponse(status_code=status,
                             content={"detail": str(exc), "error_type": type(exc).__name__})
 
-    for module in (system, models, training, prediction, evaluation, history, upload):
+    for module in (system, models, training, prediction, evaluation, history, upload, status):
         app.include_router(module.router)
 
     return app

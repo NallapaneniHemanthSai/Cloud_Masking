@@ -125,5 +125,15 @@
   build` clean; live backend+Vite integration smoke (proxy → all endpoints 200); **real browser render** of
   Dashboard/Models/Comparison/Evaluate with live data + a live `POST /evaluate` round-trip. M11 (23) / M12
   (18) / M13 (15) regressions still green.
-- **M15–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
+- **M15: COMPLETE** (awaiting approval) — Integration: ADR-0015, degraded mode + recovery + **NT-5**
+  (lineage / idempotent replay) in `db`/`services`, **reusing** M8 + M13 (no new engine/dependency). New:
+  `LineageRow`+`SystemEventRow` tables; `lineage_service` (`idempotent_get_or_create` = **detect-before-commit**
+  + get-or-create; `record_lineage`/`get_chain`); `integration_service` (aggregate-hides-subgroup guardrail
+  wiring `GuardrailViolation` → degraded mode, `enter_degraded`/`recover`/`system_status`/`run_masking_pipeline`);
+  `status` router (`GET /status`, `POST /recover/{id}`, `GET /lineage`, `POST /pipeline`); an additive
+  frontend **Status** page. Existing API contracts unchanged; results **SYNTHETIC/DEMO** only; M11 **MIXED**
+  conclusion untouched. Verified: 10 M15 tests + a **live degraded→recovery→operational smoke** through the
+  Vite proxy + a **browser** recover-in-UI check; M11 (23) / M12 (18) / M13 (15) green; frontend build/typecheck
+  clean; imports 100/100. `docs/integration/`.
+- **M16–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
   original plan's "Change detection" work follows in a later milestone.)*

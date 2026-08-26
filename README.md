@@ -338,6 +338,32 @@ Verified: `npm install` + `tsc --noEmit` + `vite build` clean; a live backend+Vi
 all endpoints 200); and a **real browser render** of the Dashboard/Models/Comparison/Evaluate pages with live
 data, including a live `POST /evaluate` round-trip. `node_modules/` and `dist/` are git-ignored.
 
+## Integration — degraded mode, recovery & NT-5 (Milestone 15)
+
+M15 wires the end-to-end system and adds the operability guarantees (FR-7/NFR-6): **degraded mode + recovery**
+and **NT-5** (*detect an invalid record before silent commit; idempotent replay; complete lineage*) in
+`db`/`services` — reusing M8 + M13 (no new engine/dependency)
+([ADR-0015](docs/adr/ADR-0015-integration-degraded-recovery.md), [`docs/integration/`](docs/integration/)).
+
+- **NT-5:** `idempotent_get_or_create` **validates before commit** (invalid ⇒ nothing persisted) and
+  get-or-creates by a deterministic hash (replay is idempotent); `record_lineage` writes a queryable
+  provenance chain (`GET /lineage`).
+- **Degraded mode:** a guardrail (strong aggregate hiding a failing subgroup) wires `GuardrailViolation` to a
+  degraded state — the affected result is labelled and held from silent use; evidence is persisted.
+- **Recovery:** `POST /recover/{event_id}` resolves the event and appends a recovery-log entry; `GET /status`
+  reflects operational/degraded. Endpoints: `GET /status`, `POST /pipeline`, `POST /recover/{id}`,
+  `GET /lineage`. An additive frontend **Status** page drives the flow.
+
+```bash
+# with the API + Vite running: exercise the flow
+curl -s -X POST /api/pipeline -d '{"inject_guardrail_failure":true}'   # → degraded
+curl -s -X POST /api/recover/<event_id>                                 # → operational
+```
+
+Verified: 10 M15 tests; a **live degraded → recovery → operational smoke** through the Vite proxy; a
+**browser** recover-in-UI check (banner flips to operational). Results are **SYNTHETIC / DEMO** only — no
+real-data metric, M11 **MIXED** conclusion untouched.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -378,13 +404,13 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** **Milestone 14 (Frontend) complete** — a React/TypeScript/Vite SPA (`frontend/`) now drives
-the M13 API's core flows (dashboard, models, prediction, evaluation, comparison, upload, history, metrics,
-map, system) via a centralized typed client + Vite proxy; it reuses the M5 palette, labels every synthetic
-result, and preserves the M11 **MIXED** conclusion (build + live browser render verified). Earlier, **Milestone
-13 (Backend API)** exposed the M6–M12 capabilities as a FastAPI service layer (SQLite + telemetry; results
-SYNTHETIC / VALIDATION ONLY). Previously, the **first real experiment** was executed: a bounded, reproducible
-**CloudSEN12+** subset (32
+**Current status:** **Milestone 15 (Integration) complete** — the end-to-end system now has **degraded mode +
+recovery** and the **NT-5** guarantees (detect-before-commit, idempotent replay, complete lineage) in
+`db`/`services`, exposed via `/status /pipeline /recover /lineage` and an additive frontend Status page
+(live degraded→recovery flow verified in the browser). Earlier, **M14 (Frontend)** delivered the React/TS/Vite
+SPA over the M13 API, and **M13 (Backend API)** exposed the M6–M12 capabilities as a FastAPI service layer
+(results SYNTHETIC / VALIDATION ONLY; M11 **MIXED** conclusion preserved throughout). Previously, the **first
+real experiment** was executed: a bounded, reproducible **CloudSEN12+** subset (32
 expert-labelled L1C samples, CC0) was acquired via **tacoreader 0.6.5** into git-ignored `data/raw/`, passed
 the M12 `is_experiment_ready()` gate (**READY**: validated, checksummed, ROI/scene-grouped leakage-free split
 24→22/5/5, thin cloud in every split, train-only normalization), and drove the **real M11** U-Net vs
@@ -413,7 +439,7 @@ remain separately labelled SYNTHETIC.
 ✅ Milestone 12 – Experimental Dataset & Data Pipeline
 ✅ Milestone 13 – Backend API
 ✅ Milestone 14 – Frontend
-⬜ Milestone 15 – Integration
+✅ Milestone 15 – Integration
 ⬜ Milestone 16 – Testing
 ⬜ Milestone 17 – Docker
 ⬜ Milestone 18 – Documentation

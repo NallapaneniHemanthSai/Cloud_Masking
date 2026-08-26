@@ -167,3 +167,44 @@ class HistoryResponse(BaseModel):
 class ErrorResponse(BaseModel):
     detail: str
     error_type: str = "error"
+
+
+# --- integration / degraded mode / lineage (M15) ------------------------------------------------
+class StatusResponse(BaseModel):
+    status: str                              # "operational" | "degraded"
+    degraded: bool
+    active_degraded_events: list[dict[str, Any]] = Field(default_factory=list)
+    event_count: int = 0
+    lineage_count: int = 0
+
+
+class RecoverResponse(BaseModel):
+    event_id: str
+    kind: str
+    subject: str
+    reason: str
+    resolved: bool
+    resolves_event_id: str | None = None
+    created_at: str | None = None
+
+
+class LineageResponse(BaseModel):
+    nodes: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class PipelineRequest(BaseModel):
+    seed: int = 0
+    with_prediction: bool = True
+    inject_guardrail_failure: bool = False   # DEMO trigger to exercise degraded mode
+
+
+class PipelineResponse(BaseModel):
+    data_regime: str
+    guardrail_passed: bool
+    guardrail_reasons: list[str] = Field(default_factory=list)
+    degraded_event: dict[str, Any] | None = None
+    status: StatusResponse
+    lineage: list[dict[str, Any]] = Field(default_factory=list)
+    evaluation: dict[str, Any] = Field(default_factory=dict)
+    prediction: dict[str, Any] | None = None
+    note: str = ""

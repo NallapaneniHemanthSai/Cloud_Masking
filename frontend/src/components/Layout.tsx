@@ -12,6 +12,7 @@ const NAV: { to: string; label: string }[] = [
   { to: '/history', label: 'History' },
   { to: '/metrics', label: 'Metrics' },
   { to: '/map', label: 'Map' },
+  { to: '/status', label: 'Status' },
   { to: '/system', label: 'System' },
 ];
 

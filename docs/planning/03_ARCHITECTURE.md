@@ -84,7 +84,7 @@ Cloud_Masking/
 │   ├── app/                # importable "app" package (clean-architecture core inward)
 │   │   ├── api/            # M13: deps + routers/{system,models,training,prediction,evaluation,history,upload} (thin adapters)
 │   │   ├── core/           # config, constants, logging_config, exceptions; M13: telemetry (in-process metrics)
-│   │   ├── services/       # M13: system/model/training/prediction/evaluation/history/upload services (reuse M6–M12; only layer the API calls)
+│   │   ├── services/       # M13: system/model/training/prediction/evaluation/history/upload · M15: lineage_service (NT-5 idempotent+detect-before-commit), integration_service (degraded mode/recovery/pipeline) — reuse M6–M12; only layer the API calls
 │   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4); M12: experimental_config, availability, records, validation_gates, sampling, dataset_statistics, artifact, readiness, pipeline, synthetic (reuses M3/M4/M5; M11 handoff)
 │   │   ├── preprocessing/  # M4: records, config, loader, validation, patching, patch_manifest, normalization, splitting, augmentation, raster_io, pipeline
 │   │   ├── visualization/  # M5: records, backends, colormap, statistics, inspection, bands, overlays, patches, plotting, reports, qc, manifest, session, exporters
@@ -151,6 +151,7 @@ Cloud_Masking/
 - **ADR-0012** — Experimental dataset & data pipeline: CloudSEN12+ primary (multiclass); On Cloud N reference-only (redistribution prohibited); deterministic curated subset + group-aware split + train-only normalization; readiness gate + M11 handoff; reuses M3/M4/M5; NOT PRESENT until data fetched. *(ACCEPTED)*
 - **ADR-0013** — Backend API: FastAPI (thin adapter over `services`) + SQLite (SQLAlchemy 2.0) + telemetry; endpoints reuse M6–M12 (no domain logic/duplication); bounded synthetic training/eval via the API; import-clean app factory; no auth/queues/Postgres (deferred). *(ACCEPTED)*
 - **ADR-0014** — Frontend: React/TS/Vite SPA; centralized typed axios client consumes the M13 API via a Vite same-origin proxy (no backend/CORS change); reuse M5 palette; SYNTHETIC/REAL/DEMO/DEFERRED labelling; MIXED conclusion preserved; no fabricated masks; low dependency overhead (no state lib/UI kit). *(ACCEPTED)*
+- **ADR-0015** — Integration: degraded mode + recovery + NT-5 (detect-before-commit, idempotent get-or-create, complete lineage) in `db`/`services`; guardrail wires `GuardrailViolation` → degraded; `/status /pipeline /recover /lineage`; reuses M8/M13, no new dependency; SYNTHETIC/DEMO only. *(ACCEPTED)*
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips), MPS-friendly, low-risk; DeepLabV3+/UNet++ future. Performance NOT YET MEASURED. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns
