@@ -1,6 +1,7 @@
 // One typed function per M13 endpoint. No domain logic — pure HTTP mapping (ADR-0014).
 import { apiClient } from './apiClient';
 import type {
+  AcceptanceResponse,
   EvaluateRequest,
   EvaluateResponse,
   HealthResponse,
@@ -65,3 +66,7 @@ export const runPipeline = (body: Partial<PipelineRequest>) =>
 export const recoverEvent = (eventId: string, note = '') =>
   apiClient.post<RecoverResponse>(`/recover/${encodeURIComponent(eventId)}`, null, { params: { note } })
     .then((r) => r.data);
+
+// --- acceptance harness (M16 / D5) --------------------------------------------------------------
+export const getAcceptance = () =>
+  apiClient.get<AcceptanceResponse>('/acceptance').then((r) => r.data);

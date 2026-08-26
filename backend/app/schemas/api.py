@@ -208,3 +208,18 @@ class PipelineResponse(BaseModel):
     evaluation: dict[str, Any] = Field(default_factory=dict)
     prediction: dict[str, Any] | None = None
     note: str = ""
+
+
+# --- acceptance harness (M16 / D5) --------------------------------------------------------------
+class AcceptanceResponse(BaseModel):
+    acceptance_version: str
+    overall: str
+    safety_passed: bool
+    kpi_overall: str
+    failed_nts: list[str] = Field(default_factory=list)
+    nt_results: list[dict[str, Any]] = Field(default_factory=list)
+    ac_coverage: list[dict[str, Any]] = Field(default_factory=list)
+    kpi_status: list[dict[str, Any]] = Field(default_factory=list)
+    coverage: dict[str, Any] = Field(default_factory=dict)
+    content_hash: str = ""
+    notes: str = ""

@@ -135,5 +135,14 @@
   conclusion untouched. Verified: 10 M15 tests + a **live degraded→recovery→operational smoke** through the
   Vite proxy + a **browser** recover-in-UI check; M11 (23) / M12 (18) / M13 (15) green; frontend build/typecheck
   clean; imports 100/100. `docs/integration/`.
-- **M16–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
+- **M16: COMPLETE** (awaiting approval) — Testing / acceptance harness (**D5**): ADR-0016, `app.acceptance`
+  package (deterministic SYNTHETIC fixtures + guardrails + `run_acceptance` harness + `AcceptanceReport`
+  JSON/MD), proving **NT-1..NT-5** each with a pass fixture (must not fire) + fail fixture (must fire).
+  **Reuses** M8 confusion (NT-2/NT-3), M15 `check_aggregate_hides_subgroup` (NT-1) + degraded/recovery +
+  lineage (NT-5) — no duplicated metric/degraded system. New NT-2/NT-3/NT-4 detections. `run_acceptance.py`
+  CLI (exits non-zero on failure); `GET /acceptance` + additive frontend **Acceptance** page. **Safety
+  properties PASS on synthetic fixtures; KPI/AC-4 acceptance NOT YET MEASURED** (never fabricated); M11
+  **MIXED** untouched. Verified: 13 M16 tests + harness CLI + live `/api/acceptance` + browser render; M11
+  (23) / M12 (18) / M13 (15) / M15 (10) green; frontend build/typecheck clean. `docs/acceptance/`.
+- **M17–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
   original plan's "Change detection" work follows in a later milestone.)*

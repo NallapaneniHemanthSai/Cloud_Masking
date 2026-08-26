@@ -11,6 +11,7 @@ import { Metrics } from './pages/Metrics';
 import { MapViewer } from './pages/MapViewer';
 import { SystemHealth } from './pages/SystemHealth';
 import { Status } from './pages/Status';
+import { Acceptance } from './pages/Acceptance';
 
 export function App() {
   return (
@@ -26,6 +27,7 @@ export function App() {
         <Route path="metrics" element={<Metrics />} />
         <Route path="map" element={<MapViewer />} />
         <Route path="status" element={<Status />} />
+        <Route path="acceptance" element={<Acceptance />} />
         <Route path="system" element={<SystemHealth />} />
         <Route path="*" element={<div className="page"><h1>Not found</h1></div>} />
       </Route>

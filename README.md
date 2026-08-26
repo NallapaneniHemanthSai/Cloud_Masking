@@ -364,6 +364,31 @@ Verified: 10 M15 tests; a **live degraded → recovery → operational smoke** t
 **browser** recover-in-UI check (banner flips to operational). Results are **SYNTHETIC / DEMO** only — no
 real-data metric, M11 **MIXED** conclusion untouched.
 
+## Acceptance harness — D5 / negative tests (Milestone 16)
+
+M16 delivers **Deliverable D5**: an acceptance harness proving the five mandatory negative tests
+(**NT-1..NT-5**) and reporting AC-1..4 + KPI status. It **reuses** M8 confusion, M9 failure categories, and
+the M15 degraded/recovery/lineage infra — no duplicated metric or degraded-mode system
+([ADR-0016](docs/adr/ADR-0016-acceptance-harness.md), [`docs/acceptance/`](docs/acceptance/)).
+
+- Each NT has a deterministic **pass** fixture (must not fire) + **fail** fixture (must fire); an NT passes
+  only when both behave correctly (no silent-pass, no false alarm). Every outcome is explainable
+  (requirement / observed / expected / evidence / action).
+- **NT-1** (easy-pixel dominance) & **NT-5** (detect-before-commit / idempotent / lineage) reuse M15; **NT-2**
+  (snow-as-cloud), **NT-3** (thin-cloud leak), **NT-4** (misleading map) are new confusion/metadata guardrails.
+  NT-1..4 detections drive M15 **degraded mode → recovery**.
+- **Honest verdict:** safety properties **PASS** on SYNTHETIC fixtures; formal **KPI/AC-4 acceptance is NOT
+  YET MEASURED** (never fabricated); the M11 **MIXED** conclusion is untouched.
+
+```bash
+backend/.venv/bin/python backend/scripts/run_acceptance.py --output outputs/acceptance   # exit 0 / non-zero
+# or, with the API running:  GET /api/acceptance  (frontend: Acceptance page)
+```
+
+Verified: 13 M16 tests; the harness CLI (deterministic content hash; non-zero exit on failure); a live
+`GET /api/acceptance` through the Vite proxy; and a **browser render** of the Acceptance page (all NT-1..5
+PASS, KPI NOT YET MEASURED).
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -404,13 +429,14 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** **Milestone 15 (Integration) complete** — the end-to-end system now has **degraded mode +
-recovery** and the **NT-5** guarantees (detect-before-commit, idempotent replay, complete lineage) in
-`db`/`services`, exposed via `/status /pipeline /recover /lineage` and an additive frontend Status page
-(live degraded→recovery flow verified in the browser). Earlier, **M14 (Frontend)** delivered the React/TS/Vite
-SPA over the M13 API, and **M13 (Backend API)** exposed the M6–M12 capabilities as a FastAPI service layer
-(results SYNTHETIC / VALIDATION ONLY; M11 **MIXED** conclusion preserved throughout). Previously, the **first
-real experiment** was executed: a bounded, reproducible **CloudSEN12+** subset (32
+**Current status:** **Milestone 16 (Testing / acceptance harness D5) complete** — the acceptance harness now
+proves the five mandatory negative tests **NT-1..NT-5** (each with a pass + fail fixture), reusing M8/M9 and
+the M15 degraded/recovery/lineage infra; **safety properties PASS on synthetic fixtures while formal KPI/AC-4
+acceptance stays NOT YET MEASURED** (never fabricated). Earlier, **M15 (Integration)** added degraded mode +
+recovery + NT-5 in `db`/`services`; **M14 (Frontend)** delivered the React/TS/Vite SPA over the M13 API; and
+**M13 (Backend API)** exposed the M6–M12 capabilities as a FastAPI service layer (results SYNTHETIC /
+VALIDATION ONLY; M11 **MIXED** conclusion preserved throughout). Previously, the **first real experiment** was
+executed: a bounded, reproducible **CloudSEN12+** subset (32
 expert-labelled L1C samples, CC0) was acquired via **tacoreader 0.6.5** into git-ignored `data/raw/`, passed
 the M12 `is_experiment_ready()` gate (**READY**: validated, checksummed, ROI/scene-grouped leakage-free split
 24→22/5/5, thin cloud in every split, train-only normalization), and drove the **real M11** U-Net vs
@@ -440,7 +466,7 @@ remain separately labelled SYNTHETIC.
 ✅ Milestone 13 – Backend API
 ✅ Milestone 14 – Frontend
 ✅ Milestone 15 – Integration
-⬜ Milestone 16 – Testing
+✅ Milestone 16 – Testing (acceptance harness / D5)
 ⬜ Milestone 17 – Docker
 ⬜ Milestone 18 – Documentation
 ⬜ Milestone 19 – Research Paper

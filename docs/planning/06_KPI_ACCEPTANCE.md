@@ -87,6 +87,14 @@ refer to the frozen `full` profile on Apple Silicon (MPS) at 512×512 patch unle
 Each NT retains: fixture/sample ID · precondition · version & config · expected vs observed · logs/measurements ·
 recovery time · residual-risk decision.
 
+> **M16 status (2026-08-26):** the **D5 acceptance harness** (`app.acceptance`, `run_acceptance.py`,
+> `GET /acceptance`) proves **all five NTs on deterministic SYNTHETIC fixtures** — each with a pass fixture
+> (must not fire) and a fail fixture (must fire → NT-1..4 drive M15 degraded mode + recovery; NT-5 rejects the
+> invalid record before commit). It reuses M8 confusion + M15 degraded/recovery/lineage (no duplicate system).
+> Verdict: **SAFETY = PASS (synthetic)**. It does **not** compute real KPIs — the KPI table above and AC-1/AC-3/
+> AC-4 acceptance remain **NOT YET MEASURED** (need a real frozen-envelope dataset), so the full **Pass Contract
+> is not yet satisfiable**; the harness reports this honestly. The M11 real-data conclusion remains **MIXED**.
+
 ## 4. Pass Contract
 
 The project passes only when **every** KPI target passes under AC-1 & AC-4, **every** guardrail holds, and

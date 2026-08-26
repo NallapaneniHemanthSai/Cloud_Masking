@@ -20,6 +20,7 @@ def create_app() -> Any:
     from fastapi.responses import JSONResponse
 
     from app.api.routers import (
+        acceptance,
         evaluation,
         history,
         models,
@@ -72,7 +73,7 @@ def create_app() -> Any:
         return JSONResponse(status_code=status,
                             content={"detail": str(exc), "error_type": type(exc).__name__})
 
-    for module in (system, models, training, prediction, evaluation, history, upload, status):
+    for module in (system, models, training, prediction, evaluation, history, upload, status, acceptance):
         app.include_router(module.router)
 
     return app

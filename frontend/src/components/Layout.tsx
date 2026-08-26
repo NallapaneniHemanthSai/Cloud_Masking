@@ -13,6 +13,7 @@ const NAV: { to: string; label: string }[] = [
   { to: '/metrics', label: 'Metrics' },
   { to: '/map', label: 'Map' },
   { to: '/status', label: 'Status' },
+  { to: '/acceptance', label: 'Acceptance' },
   { to: '/system', label: 'System' },
 ];
 

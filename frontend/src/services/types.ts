@@ -209,3 +209,18 @@ export interface RecoverResponse {
   resolves_event_id?: string | null;
   created_at?: string | null;
 }
+
+// --- acceptance harness (M16 / D5) --------------------------------------------------------------
+export interface AcceptanceResponse {
+  acceptance_version: string;
+  overall: string;
+  safety_passed: boolean;
+  kpi_overall: string;
+  failed_nts: string[];
+  nt_results: Record<string, unknown>[];
+  ac_coverage: Record<string, unknown>[];
+  kpi_status: Record<string, unknown>[];
+  coverage: Record<string, unknown>;
+  content_hash: string;
+  notes: string;
+}

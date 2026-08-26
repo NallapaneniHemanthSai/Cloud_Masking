@@ -94,6 +94,7 @@ Cloud_Masking/
 │   │   ├── evaluation/     # M8: config, confusion, metrics, aggregation, records, runner, stratification, summary, report, serialization, binary
 │   │   ├── failure_analysis/ # M9: taxonomy, config, records, pixel_analysis, sample_analysis, ranking, stratification, analyzer, viz_specs, report (reuses M8/M5)
 │   │   ├── comparison/     # M11: config (single-source ComparisonConfig), guardrails (fairness), records (ModelComparisonArtifact), metrics, failures, decision, runner, viz_specs, report, serialization (reuses M7/M8/M9/M5)
+│   │   ├── acceptance/     # M16 (D5): fixtures, guardrails (NT-2/3/4), harness (run_acceptance), records (AcceptanceReport), report — proves NT-1..5, reuses M8 confusion + M15 degraded/recovery/lineage
 │   │   ├── change_detection/ # change-detection task + masking-impact measurement
 │   │   ├── db/             # M13: base (Database/engine/session) + models (SQLAlchemy 2.0: model_versions, training_runs, predictions, evaluation_runs, uploads)
 │   │   ├── schemas/        # M13: api.py — Pydantic v2 request/response DTOs
@@ -152,6 +153,7 @@ Cloud_Masking/
 - **ADR-0013** — Backend API: FastAPI (thin adapter over `services`) + SQLite (SQLAlchemy 2.0) + telemetry; endpoints reuse M6–M12 (no domain logic/duplication); bounded synthetic training/eval via the API; import-clean app factory; no auth/queues/Postgres (deferred). *(ACCEPTED)*
 - **ADR-0014** — Frontend: React/TS/Vite SPA; centralized typed axios client consumes the M13 API via a Vite same-origin proxy (no backend/CORS change); reuse M5 palette; SYNTHETIC/REAL/DEMO/DEFERRED labelling; MIXED conclusion preserved; no fabricated masks; low dependency overhead (no state lib/UI kit). *(ACCEPTED)*
 - **ADR-0015** — Integration: degraded mode + recovery + NT-5 (detect-before-commit, idempotent get-or-create, complete lineage) in `db`/`services`; guardrail wires `GuardrailViolation` → degraded; `/status /pipeline /recover /lineage`; reuses M8/M13, no new dependency; SYNTHETIC/DEMO only. *(ACCEPTED)*
+- **ADR-0016** — Acceptance harness (D5): proves NT-1..NT-5 (pass+fail fixtures) reusing M8 confusion + M15 degraded/recovery/lineage; NT-2/3/4 new guardrails; `run_acceptance` CLI (non-zero on fail) + `/acceptance`; SAFETY passes on synthetic, KPI/AC-4 NOT YET MEASURED (never fabricated). *(ACCEPTED)*
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips), MPS-friendly, low-risk; DeepLabV3+/UNet++ future. Performance NOT YET MEASURED. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns
