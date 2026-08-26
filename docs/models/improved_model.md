@@ -89,3 +89,13 @@ python backend/scripts/model_compare.py --in-channels 13 --classes 4 --patch 128
 ```
 Prints/writes a structured comparison (parameters, config, input/output shape, availability, measurement
 status). Everything not measured is labelled `NOT_MEASURED` / `DEFERRED` / `NOT YET MEASURED`.
+
+## First real evidence (2026-08-20) — MEASURED, bounded
+
+A first **real** controlled comparison on a bounded CloudSEN12+ subset (32 samples, 12 epochs, 3 seeds, MPS)
+found that Attention U-Net **consistently improves the primary thin-cloud metric** (IoU mean **+0.050**;
+recall and false-negatives better in every seed) at ~1.01× params / ~1.2–1.3× training time — first real
+support for the attention-gate hypothesis. It also **consistently regresses cloud shadow** slightly, so the
+overall verdict is **MIXED** (not a uniform winner, no forced conclusion). This is **not** the AC-4 benchmark
+and does not populate the formal KPIs. Full detail + per-class/per-seed numbers:
+[`../comparison/real_experiment_cloudsen12.md`](../comparison/real_experiment_cloudsen12.md).

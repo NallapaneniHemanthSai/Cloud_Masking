@@ -82,23 +82,23 @@ nested under `app/`, `configs`+`scripts` moved under `backend/`, and `data/model
 Cloud_Masking/
 ├── backend/
 │   ├── app/                # importable "app" package (clean-architecture core inward)
-│   │   ├── api/routers/    # FastAPI routers: train, predict, evaluate, models, history, upload, metrics, version (M13)
-│   │   ├── core/           # config, constants, logging_config, exceptions (stdlib-only skeletons at M2)
-│   │   ├── services/       # use-case orchestration (training/prediction/evaluation/change-detect)
+│   │   ├── api/            # M13: deps + routers/{system,models,training,prediction,evaluation,history,upload} (thin adapters)
+│   │   ├── core/           # config, constants, logging_config, exceptions; M13: telemetry (in-process metrics)
+│   │   ├── services/       # M13: system/model/training/prediction/evaluation/history/upload services (reuse M6–M12; only layer the API calls)
 │   │   ├── datasets/       # manifest/integrity/download (M3); CloudSEN12+On Cloud N loaders, splits (M4); M12: experimental_config, availability, records, validation_gates, sampling, dataset_statistics, artifact, readiness, pipeline, synthetic (reuses M3/M4/M5; M11 handoff)
 │   │   ├── preprocessing/  # M4: records, config, loader, validation, patching, patch_manifest, normalization, splitting, augmentation, raster_io, pipeline
 │   │   ├── visualization/  # M5: records, backends, colormap, statistics, inspection, bands, overlays, patches, plotting, reports, qc, manifest, session, exporters
 │   │   ├── models/         # M6: config, base, blocks, unet, initialization, summary, metadata, artifact, registry, factory · M10: attention_unet (improved), comparison (deeplabv3+/unet++ future)
-│   │   ├── inference/      # tiled prediction, stitching, telemetry
+│   │   ├── inference/      # M13: predictor (tiled prediction + stitching; reuses M6 models + M4 tiling + M7 checkpoints)
 │   │   ├── training/       # M7: config, seed, optimizer, scheduler, loss, metadata, logging, checkpoint, callbacks (events+priorities), engine, experiment, lifecycle (TrainerState), artifact (TrainingArtifact), trainer
 │   │   ├── evaluation/     # M8: config, confusion, metrics, aggregation, records, runner, stratification, summary, report, serialization, binary
 │   │   ├── failure_analysis/ # M9: taxonomy, config, records, pixel_analysis, sample_analysis, ranking, stratification, analyzer, viz_specs, report (reuses M8/M5)
 │   │   ├── comparison/     # M11: config (single-source ComparisonConfig), guardrails (fairness), records (ModelComparisonArtifact), metrics, failures, decision, runner, viz_specs, report, serialization (reuses M7/M8/M9/M5)
 │   │   ├── change_detection/ # change-detection task + masking-impact measurement
-│   │   ├── db/             # SQLite models + migrations (model versions, metrics, predictions, history)
-│   │   ├── schemas/        # Pydantic request/response DTOs (empty package at M2; implemented M13)
+│   │   ├── db/             # M13: base (Database/engine/session) + models (SQLAlchemy 2.0: model_versions, training_runs, predictions, evaluation_runs, uploads)
+│   │   ├── schemas/        # M13: api.py — Pydantic v2 request/response DTOs
 │   │   ├── utils/          # geo utils (CRS/registration), io, seeding, reproducibility
-│   │   └── main.py         # FastAPI app factory placeholder (returns None at M2; M13)
+│   │   └── main.py         # M13: FastAPI app factory create_app() (import-clean/lazy; routers + telemetry + lifespan)
 │   ├── tests/              # structure + import tests (M2); unit/integration/api/model from M6
 │   ├── configs/            # config.template.yaml, smoke.yaml, full.yaml, logging.yaml
 │   ├── scripts/            # download, validate, preprocess, split, stats, train, evaluate, predict, run_reference (M3+)
@@ -149,6 +149,7 @@ Cloud_Masking/
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips) alongside the baseline; reuses model abstraction; performance NOT YET MEASURED. *(ACCEPTED)*
 - **ADR-0011** — Controlled comparison: single-source `ComparisonConfig` + fairness guardrails; thin-cloud-primary decision framework; reuses M7/M8/M9; honest status labels; INCONCLUSIVE until real results. *(ACCEPTED)*
 - **ADR-0012** — Experimental dataset & data pipeline: CloudSEN12+ primary (multiclass); On Cloud N reference-only (redistribution prohibited); deterministic curated subset + group-aware split + train-only normalization; readiness gate + M11 handoff; reuses M3/M4/M5; NOT PRESENT until data fetched. *(ACCEPTED)*
+- **ADR-0013** — Backend API: FastAPI (thin adapter over `services`) + SQLite (SQLAlchemy 2.0) + telemetry; endpoints reuse M6–M12 (no domain logic/duplication); bounded synthetic training/eval via the API; import-clean app factory; no auth/queues/Postgres (deferred). *(ACCEPTED)*
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips), MPS-friendly, low-risk; DeepLabV3+/UNet++ future. Performance NOT YET MEASURED. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns

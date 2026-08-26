@@ -141,3 +141,21 @@ isolated adapter. Real dataset status today: **NOT PRESENT**.
 Install `tacoreader`/`rasterio` in the Python 3.11 environment, fetch the curated CloudSEN12+ subset, run the
 readiness gate to `READY`, and hand off to M11 for the first **real** controlled comparison (populates
 KPI-1/2 for O3). Optional On Cloud N reproduction under its terms for the R-13 domain-shift check.
+
+## Addendum (2026-08-20) — real-data execution
+
+The above future work was carried out. The tacoreader-0.6.5 access route was verified against the installed
+library (each L1C sample is a `TORTILLA` of two `GTiff` assets — `s2l1c` 13-band uint16 512×512 + `target`
+uint8 label 0–3 — read via rasterio from `/vsisubfile/…/vsicurl/…`); a bounded 32-sample CC0 subset was
+acquired (`app.datasets.cloudsen12_access`, reusing M3 integrity) and passed `is_experiment_ready()`. Two
+small, tested, backward-compatible adapters were added and are recorded here:
+
+1. **`build_split_manifest(stratify=True)`** — a class-stratified, still-ROI-grouped (leakage-free) split.
+   Rationale: a purely random ROI split left the small test set with **no thin-cloud pixels**, making the
+   primary metric undefined. Stratification guarantees thin-cloud/cloud-shadow are evaluable in val/test
+   without ever splitting an ROI. Default remains off (synthetic path unchanged).
+2. **`ComparisonRunner(data_provider=…)`** — a small isolated M12→M11 hook feeding real (x,y) patch batches
+   to the *unchanged* M11 comparison/decision logic (all M11 tests still pass). No M8/M9/decision change.
+
+Result (bounded, MEASURED, not AC-4): thin-cloud consistently improved for Attention U-Net across 3 seeds
+with a cloud-shadow trade-off → **MIXED**. See `docs/comparison/real_experiment_cloudsen12.md`.

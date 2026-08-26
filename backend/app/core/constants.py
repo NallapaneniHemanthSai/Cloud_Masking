@@ -105,6 +105,8 @@ FAILURE_ANALYSIS_VERSION: str = "0.9.0"
 COMPARISON_VERSION: str = "0.11.0"
 #: Version stamped onto experimental-dataset records/manifests/artifacts (dataset readiness pipeline).
 DATASET_MANIFEST_VERSION: str = "0.12.0"
+#: Version of the backend API application (Milestone 13).
+API_VERSION: str = "0.13.0"
 DEFAULT_PATCH_SIZE: int = 512          # capped further for the MPS envelope in profiles (ADR-0002)
 DEFAULT_PATCH_OVERLAP: int = 0         # pixels of overlap between adjacent patches
 DEFAULT_RANDOM_SEED: int = 42          # global reproducibility seed

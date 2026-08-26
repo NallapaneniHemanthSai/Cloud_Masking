@@ -13,6 +13,7 @@ No second downloader/validator/splitter is created; everything is reused. Standa
 
 from __future__ import annotations
 
+import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -314,3 +315,102 @@ def _write_outputs(out: Path, artifact: DatasetArtifact, split_manifest: Experim
 def default_processed_dir(dataset_id: str, data_root: Path) -> Path:
     """Conventional processed-dataset output directory."""
     return Path(data_root) / DEFAULT_PROCESSED_DIRNAME / dataset_id
+
+
+def prepare_real_local_dataset(
+    config: ExperimentalDatasetConfig,
+    *,
+    samples: list[SampleRecord],
+    groups: dict[str, str],
+    sample_classes: dict[str, set[str]],
+    checksums: dict[str, str],
+    image_reader,
+    label_reader,
+    image_size: tuple[int, int],
+    dataset_version: str,
+    dataset_record: ExperimentalDatasetRecord,
+    output_dir: Path,
+    expected_bands: int | None = 1,
+) -> PreparedDataset:
+    """Run the full M12 readiness pipeline on **already-acquired real local** samples (REAL regime).
+
+    Reuses every M12 building block (validation gates, subset, group-aware split, train-only normalization,
+    class distribution, patch manifest, artifact, readiness, handoff). No pixels are synthesised; all rasters
+    are read via the injected rasterio readers. ``image_reader``/``label_reader`` map a path → a ``(C,H,W)`` /
+    ``(H,W)`` array.
+    """
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    # 1) Validation gates (reuse M3 integrity + rasterio readers).
+    validation = validate_experimental_dataset(
+        config.dataset_id, samples, num_classes=config.class_count,
+        required_classes=config.required_classes, class_mapping=config.class_mapping,
+        label_reader=label_reader, checksums=checksums, expected_bands=expected_bands,
+        metadata_ok=True, data_regime=REGIME_REAL)
+
+    # 2) Deterministic subset record over the acquired pool (already class/scene-curated at acquisition).
+    subset = select_subset([s.sample_id for s in samples], config=config, groups=groups,
+                           sample_classes=sample_classes, data_regime=REGIME_REAL)
+
+    # 3) Class-stratified group-aware split (reuse M4) — guarantees thin cloud is evaluable in val/test.
+    split_manifest = build_split_manifest(subset, config=config, dataset_version=dataset_version,
+                                          sample_classes=sample_classes, stratify=True)
+    by_id = {s.sample_id: s for s in samples}
+    samples_by_split: dict[str, list[SampleRecord]] = {
+        split: [by_id[sid] for sid in split_manifest.ids_for(split) if sid in by_id]
+        for split in ("train", "val", "test")}
+
+    # 4) Real class distribution (thin cloud surfaced).
+    distribution = class_distribution_report(
+        samples_by_split, label_reader=label_reader, class_mapping=config.class_mapping,
+        data_regime=REGIME_REAL)
+
+    # 5) Normalization fit on TRAIN ONLY (reuse M4).
+    train_images = [s.image_paths[0] for s in samples_by_split["train"] if s.image_paths]
+    norm_stats = fit_normalization(train_images, image_reader=image_reader,
+                                   normalization_mode=config.normalization_mode,
+                                   nodata_value=config.nodata_value)
+    norm_hash = normalization_stats_hash(norm_stats)
+
+    # 6) Patch manifest (reuse M4).
+    patch_size_used = min(config.patch_size, image_size[0], image_size[1])
+    manifest = PatchManifest()
+    for split in ("train", "val", "test"):
+        for s in samples_by_split[split]:
+            manifest.extend(build_patch_records(s, split, patch_size_used, config.overlap, image_size))
+
+    dataset_record.patch_count = len(manifest)
+    dataset_record.patch_dimensions = f"{image_size[0]}x{image_size[1]}"
+    dataset_record.observed_files = [str(p) for s in samples for p in s.image_paths][:8]
+
+    counts = split_manifest.counts()
+    artifact = DatasetArtifact.create(
+        dataset_id=config.dataset_id, dataset_version=dataset_version,
+        manifest_version=config.manifest_version, preprocessing_version=config.preprocessing_version,
+        config_hash=config.config_hash(), subset_selection_hash=subset.selection_hash(),
+        split_manifest_hash=split_manifest.split_config_hash(), normalization_statistics_hash=norm_hash,
+        validation_report=validation.to_dict(), class_distribution=distribution.to_dict(),
+        dataset_record=dataset_record.to_dict(), sample_count=subset.size, patch_count=len(manifest),
+        train_count=counts["train"], validation_count=counts["val"], test_count=counts["test"],
+        data_regime=REGIME_REAL, notes="Real CloudSEN12+ curated subset (CC0).")
+
+    readiness = is_experiment_ready(artifact, split_manifest=split_manifest, config=config,
+                                    dataset_record=dataset_record)
+    written = _write_outputs(out, artifact, split_manifest, norm_stats, distribution, validation,
+                             manifest, dataset_record)
+    handoff = build_handoff(
+        artifact, readiness, config, dataset_artifact_path=written.get("artifact", ""),
+        split_manifest_path=written.get("split_manifest", ""),
+        normalization_statistics_path=written.get("normalization", ""))
+    handoff_path = out / "experiment_handoff.json"
+    handoff_path.write_text(json.dumps(handoff.to_dict(), indent=2), encoding="utf-8")
+    written["handoff"] = str(handoff_path)
+
+    logger.info("REAL dataset prepared: ready=%s, samples=%d, patches=%d.",
+                readiness.ready, subset.size, len(manifest))
+    return PreparedDataset(
+        config=config, data_regime=REGIME_REAL, validation=validation, dataset_record=dataset_record,
+        artifact=artifact, readiness=readiness, handoff=handoff, subset=subset,
+        split_manifest=split_manifest, class_distribution=distribution, normalization_hash=norm_hash,
+        patch_count=len(manifest), output_dir=out, written=written)

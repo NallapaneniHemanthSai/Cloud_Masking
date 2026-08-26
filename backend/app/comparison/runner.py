@@ -119,7 +119,8 @@ class ComparisonRunner:
 
     def __init__(self, config: ComparisonConfig, *, output_dir: Path | None = None,
                  synthetic: bool = True, synthetic_patch: int = 16, synthetic_batches: int = 2,
-                 batch_size: int = 2, thresholds: DecisionThresholds | None = None) -> None:
+                 batch_size: int = 2, thresholds: DecisionThresholds | None = None,
+                 data_provider: Any = None) -> None:
         self.config = config
         self.output_dir = Path(output_dir) if output_dir else None
         self.synthetic = synthetic
@@ -127,6 +128,10 @@ class ComparisonRunner:
         self.synthetic_batches = synthetic_batches
         self.batch_size = batch_size
         self.thresholds = thresholds or DecisionThresholds()
+        # Optional REAL-data hook (M12→M11 adapter): a callable ``plan -> (train_loader, test_loader,
+        # test_meta)`` supplying real (x,y) tensor batches + per-sample metadata. When set, the comparison
+        # runs on REAL data (data_regime=REAL, quality MEASURED) instead of the synthetic generator.
+        self.data_provider = data_provider
 
     # --- public entry point -----------------------------------------------------------------------
     def run(self, seeds: Sequence[int] | None = None) -> ComparisonResult:
@@ -144,10 +149,11 @@ class ComparisonRunner:
         seeds_executed: list[int] = []
 
         torch_ok = torch_available()
-        can_train = torch_ok and self.synthetic
-        real_ok = (not self.synthetic) and real_data_available(self.config)
+        real_provider = self.data_provider is not None
+        can_train = torch_ok and (self.synthetic or real_provider)
+        real_ok = real_provider or ((not self.synthetic) and real_data_available(self.config))
 
-        if real_ok:  # pragma: no cover - no real dataset is present in this environment
+        if real_ok:
             data_regime = REAL_DATA
             quality_status = MEASURED
         elif self.synthetic and torch_ok:
@@ -212,8 +218,12 @@ class ComparisonRunner:
                 batches.append((x, y))
             return batches
 
-        train_loader = make_loader(0)
-        test_loader = make_loader(1000)
+        test_meta = None
+        if self.data_provider is not None:                       # REAL data (M12 adapter)
+            train_loader, test_loader, test_meta = self.data_provider(plan)
+        else:
+            train_loader = make_loader(0)
+            test_loader = make_loader(1000)
 
         # --- train via the reused M7 Trainer (compute MEASURED on synthetic data) ------------------
         arm_dir = None
@@ -240,9 +250,13 @@ class ComparisonRunner:
                 targets = y.numpy()
                 runner.update(targets, preds)
                 for si in range(targets.shape[0]):
-                    samples.append({"sample_id": f"{plan.label}_b{bi}_s{si}",
-                                    "targets": targets[si], "predictions": preds[si],
-                                    "group": plan.label})
+                    if test_meta is not None:
+                        m = test_meta[bi][si]
+                        sid, grp = m.get("sample_id", f"s{bi}_{si}"), m.get("group", plan.label)
+                    else:
+                        sid, grp = f"{plan.label}_b{bi}_s{si}", plan.label
+                    samples.append({"sample_id": sid, "targets": targets[si],
+                                    "predictions": preds[si], "group": grp})
         inference_seconds = round(time.time() - infer_start, 6)
         evaluation_result = runner.compute_result()
 
@@ -259,7 +273,9 @@ class ComparisonRunner:
             total_training_seconds=summary.duration_seconds, avg_epoch_seconds=avg_epoch,
             inference_seconds=inference_seconds, peak_memory=peak_memory,
             measurement_status=(MEASURED if quality_status == MEASURED else SYNTHETIC),
-            notes=("Parameters MEASURED; timings measured on SYNTHETIC data (VALIDATION ONLY); "
+            notes=("Parameters MEASURED; timings MEASURED on real data; peak memory NOT MEASURED on "
+                   "cpu/mps." if quality_status == MEASURED else
+                   "Parameters MEASURED; timings measured on SYNTHETIC data (VALIDATION ONLY); "
                    "peak memory NOT MEASURED on cpu/mps."))
 
         # --- artifacts (reuse M6/M7) ----------------------------------------------------------------

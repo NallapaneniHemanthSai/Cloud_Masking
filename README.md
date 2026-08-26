@@ -290,6 +290,31 @@ The `--synthetic-smoke` path runs the whole pipeline on a **SYNTHETIC / PIPELINE
 pipeline never downloads), so the readiness gate is **False** and real model quality stays **NOT YET
 MEASURED**. This is a dataset milestone — it claims no benchmark scores.
 
+## Backend API (Milestone 13)
+
+A **FastAPI** backend (`app.main:create_app`) exposing `/train /predict /evaluate /models /history /upload
+/metrics /version /health` + Swagger `/docs`, with **SQLite** persistence and request **telemetry**. The API
+is a thin adapter: routers → typed **Pydantic v2** DTOs → **services** that reuse M6 models, M4
+preprocessing, M7 training, M8 evaluation, and the M6/M4/M7 inference predictor — **no domain logic or
+duplicated infrastructure in the API** ([ADR-0013](docs/adr/ADR-0013-backend-api.md)).
+
+| Endpoint | Reuses | Notes |
+|----------|--------|-------|
+| `/version` `/health` `/metrics` | constants / telemetry | versions, liveness/device, per-route latency |
+| `/models` | M6 registry + SQLite | list architectures; register/list model versions |
+| `/train` | **M7 Trainer** | bounded **synthetic** training only (labelled SYNTHETIC); persists a run |
+| `/predict` | **M6 + M4 + M7** | tiled inference (uploaded/inline image or synthetic) |
+| `/evaluate` | **M8** | synthetic evaluation; thin-cloud IoU surfaced |
+| `/upload` `/history` | SQLite | store a file; query training/prediction/evaluation/upload history |
+
+```bash
+backend/.venv/bin/python backend/scripts/serve_api.py --host 127.0.0.1 --port 8000   # Swagger at /docs
+```
+
+All results produced **through the API are SYNTHETIC / VALIDATION ONLY** — the API never fabricates
+real-data metrics, and the bounded M11 **MIXED** conclusion (incl. the cloud-shadow regression) is untouched.
+Tests are framework-free (no `httpx`); the DB lives under git-ignored `outputs/`.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -330,16 +355,22 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** Milestone 12 (Experimental Dataset & Data Pipeline) complete and under review — a new
-`app.datasets` readiness pipeline turns *"dataset infrastructure exists"* into a *"verified, reproducible,
-legally usable, locally available experimental dataset"* (or an honest `NOT_PRESENT`), **reusing** M3
-integrity, M4 splitting/patching/normalization, and M5 statistics. It provides availability + structured
-validation, a deterministic curated subset, a **group-aware leakage-free** split, **train-only**
-normalization, a thin-cloud-surfaced class distribution, a `DatasetArtifact` (deterministic hash), an
-`is_experiment_ready()` gate, and an M11 handoff. A labelled **SYNTHETIC / PIPELINE-VALIDATION-ONLY** fixture
-exercises the whole pipeline. **Real CloudSEN12 is NOT PRESENT** (rasterio/tacoreader not installed; the
-pipeline never downloads) → readiness gate **False**; **real model quality NOT YET MEASURED**. M11 comparison
-logic unchanged.
+**Current status:** **Milestone 13 (Backend API) complete** — a FastAPI backend (all endpoints + Swagger,
+SQLite persistence, telemetry) now exposes the M6–M12 capabilities as a thin service layer; API-produced
+results are SYNTHETIC / VALIDATION ONLY (see the Backend API section above). Previously, the **first real
+experiment** was executed: a bounded, reproducible **CloudSEN12+** subset (32
+expert-labelled L1C samples, CC0) was acquired via **tacoreader 0.6.5** into git-ignored `data/raw/`, passed
+the M12 `is_experiment_ready()` gate (**READY**: validated, checksummed, ROI/scene-grouped leakage-free split
+24→22/5/5, thin cloud in every split, train-only normalization), and drove the **real M11** U-Net vs
+Attention U-Net comparison on **Apple MPS** (M7 training + M8 evaluation + M9 failure analysis; only the
+architecture differs). **Measured, real result (3 seeds):** Attention U-Net **consistently improves the
+primary thin-cloud metric** (IoU mean **+0.050**, recall & false-negatives better every seed) at ~1.01×
+params / ~1.2–1.3× train time, but with a small consistent **cloud-shadow** trade-off, so the overall verdict
+is **MIXED** (framework: IMPROVED / REGRESSION / REGRESSION across seeds — no forced winner). Full detail:
+[`docs/comparison/real_experiment_cloudsen12.md`](docs/comparison/real_experiment_cloudsen12.md). This is a
+bounded first run, **not** the frozen AC-4 benchmark; formal project KPIs remain **NOT YET MEASURED**.
+Earlier M12 built the readiness pipeline itself (reusing M3/M4/M5); synthetic pipeline-validation results
+remain separately labelled SYNTHETIC.
 
 ```
 ✅ Milestone 1  – Planning
@@ -354,7 +385,7 @@ logic unchanged.
 ✅ Milestone 10 – Improved Model
 ✅ Milestone 11 – Comparison
 ✅ Milestone 12 – Experimental Dataset & Data Pipeline
-⬜ Milestone 13 – Backend API
+✅ Milestone 13 – Backend API
 ⬜ Milestone 14 – Frontend
 ⬜ Milestone 15 – Integration
 ⬜ Milestone 16 – Testing

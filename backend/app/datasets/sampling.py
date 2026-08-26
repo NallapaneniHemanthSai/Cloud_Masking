@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import random
+from collections import defaultdict
 from typing import Mapping, Sequence
 
 from app.datasets.experimental_config import ExperimentalDatasetConfig
@@ -91,13 +92,25 @@ def build_split_manifest(
     *,
     config: ExperimentalDatasetConfig,
     dataset_version: str,
+    sample_classes: Mapping[str, set[str]] | None = None,
+    stratify: bool = False,
 ) -> ExperimentalSplitManifest:
-    """Build a leakage-checked group-aware split manifest for a subset (reuses M4 ``split_samples``)."""
-    ratios = SplitRatios(train=config.split_ratios[0], val=config.split_ratios[1],
-                         test=config.split_ratios[2])
+    """Build a leakage-checked group-aware split manifest for a subset (reuses M4 ``split_samples``).
+
+    With ``stratify=True`` and ``sample_classes``, a **class-stratified group-aware** split is produced
+    instead of a purely random ROI split: whole ROI/scene groups are assigned so that each of val and test
+    contains at least one group carrying each required class where the pool permits (so the PRIMARY
+    thin-cloud metric is evaluable on the test split). Groups are never split, so ROI disjointness — and
+    hence leakage-freeness — is preserved either way.
+    """
     groups = selection.group_ids
-    m4_manifest = split_samples(selection.selected_ids, ratios=ratios, seed=config.seed, groups=groups)
-    lookup = m4_manifest.split_lookup()
+    if stratify and sample_classes:
+        lookup = _stratified_group_split(selection.selected_ids, groups, sample_classes, config)
+    else:
+        ratios = SplitRatios(train=config.split_ratios[0], val=config.split_ratios[1],
+                             test=config.split_ratios[2])
+        lookup = split_samples(selection.selected_ids, ratios=ratios, seed=config.seed,
+                               groups=groups).split_lookup()
 
     entries = [SplitEntry(sample_id=sid, group_id=groups.get(sid, sid), split=lookup[sid])
                for sid in selection.selected_ids if sid in lookup]
@@ -107,8 +120,50 @@ def build_split_manifest(
         grouped=True)
 
     if not manifest.leakage_ok():
-        # Reuse M4's guarantee; this should never trigger, but we assert it explicitly (section 8).
         from app.core.exceptions import PreprocessingError
         raise PreprocessingError("Split leakage detected — samples or groups shared across splits.")
-    logger.info("Split manifest: %s (leakage_ok=%s).", manifest.counts(), manifest.leakage_ok())
+    logger.info("Split manifest: %s (leakage_ok=%s, stratified=%s).",
+                manifest.counts(), manifest.leakage_ok(), bool(stratify and sample_classes))
     return manifest
+
+
+def _stratified_group_split(ids: Sequence[str], groups: Mapping[str, str],
+                            sample_classes: Mapping[str, set[str]],
+                            config: ExperimentalDatasetConfig) -> dict[str, str]:
+    """Assign whole ROI groups to train/val/test so val & test cover each required class (deterministic)."""
+    group_members: dict[str, list[str]] = defaultdict(list)
+    group_classes: dict[str, set[str]] = defaultdict(set)
+    for sid in ids:
+        g = groups.get(sid, sid)
+        group_members[g].append(sid)
+        group_classes[g] |= set(sample_classes.get(sid, set()))
+
+    group_keys = sorted(group_members)
+    random.Random(config.seed).shuffle(group_keys)
+    n = len(group_keys)
+    n_test = max(1, int(round(n * config.split_ratios[2])))
+    n_val = max(1, int(round(n * config.split_ratios[1])))
+    assign: dict[str, str] = {g: "train" for g in group_keys}
+    required = list(config.required_classes)
+
+    def fill(split_name: str, count: int) -> None:
+        # First, greedily cover required classes (thin cloud / shadow prioritised by required order).
+        need = set(required)
+        for g in group_keys:
+            if assign[g] != "train":
+                continue
+            if sum(1 for x in assign.values() if x == split_name) >= count:
+                break
+            if need & group_classes[g]:
+                assign[g] = split_name
+                need -= group_classes[g]
+        # Then top up to the target count with any remaining train groups.
+        for g in group_keys:
+            if sum(1 for x in assign.values() if x == split_name) >= count:
+                break
+            if assign[g] == "train":
+                assign[g] = split_name
+
+    fill("test", n_test)
+    fill("val", n_val)
+    return {sid: assign[groups.get(sid, sid)] for sid in ids}

@@ -97,5 +97,22 @@
   harness, `DATASET_MANIFEST_VERSION`. Synthetic fixture validates the whole pipeline (PIPELINE VALIDATION
   ONLY). **Real CloudSEN12 NOT PRESENT (rasterio/tacoreader absent; no download performed) → readiness gate
   = False; real model quality NOT YET MEASURED.** No M11 change.
-- **M13–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
+- **First REAL experiment: EXECUTED** (2026-08-20) — bounded CloudSEN12+ subset (32 expert-labelled L1C
+  samples, CC0) acquired via **tacoreader 0.6.5** (raw git-ignored), passed the M12 readiness gate (READY;
+  ROI-grouped leakage-free stratified split; thin cloud in every split; train-only normalization), and drove
+  the **real M11** U-Net vs Attention U-Net comparison on **MPS** (reused M7/M8/M9; only architecture
+  differs). Real, MEASURED, 3-seed result: **thin-cloud IoU consistently improves (mean +0.050)** with a
+  small cloud-shadow trade-off → **overall MIXED** (no forced winner). Bounded first run, **not** AC-4;
+  formal KPIs remain NOT YET MEASURED. Adapters added: M11 `data_provider` hook + M12 stratified group split
+  (both small, tested, backward-compatible). See `docs/comparison/real_experiment_cloudsen12.md`.
+- **M13: COMPLETE** (awaiting approval) — Backend API: ADR-0013, FastAPI app factory (`app.main.create_app`,
+  import-clean/lazy) with `/train /predict /evaluate /models /history /upload /metrics /version /health` +
+  Swagger `/docs`, **SQLite** persistence (SQLAlchemy 2.0: model versions / training runs / predictions /
+  evaluations / uploads), request **telemetry** middleware, and structured logging. Thin routers → typed
+  Pydantic v2 DTOs → **services** that reuse M6 models, M4 preprocessing, M7 training, M8 evaluation, M9 —
+  no domain logic or duplicated infrastructure in the API. `serve_api.py` launcher; framework-free tests
+  (no httpx). All API-produced results are **SYNTHETIC / VALIDATION ONLY**; the M11 MIXED conclusion and the
+  cloud-shadow regression are untouched. Verified: 15 API tests + live uvicorn smoke (Swagger live);
+  M11 (23) / M12 (18) / import (100) / structure regressions still green.
+- **M14–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
   original plan's "Change detection" work follows in a later milestone.)*

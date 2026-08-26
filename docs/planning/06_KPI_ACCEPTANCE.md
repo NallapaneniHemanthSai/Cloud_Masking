@@ -5,8 +5,13 @@
 > runs, in Milestones 7–11 (baselines/O2) and 10–11 (candidate/O3), never fabricated.
 > **Prerequisite (M12):** these KPIs can only be populated once a real experimental dataset passes the M12
 > `is_experiment_ready()` gate (verified files/checksums/labels, disjoint scene-grouped splits, thin-cloud
-> present, train-only normalization). M12 delivered that gate but the real dataset is currently
-> **NOT PRESENT**, so every value below remains **NOT YET MEASURED** — M12 changed no KPI value.
+> present, train-only normalization).
+> **First real measurement (2026-08-20):** a real **CloudSEN12+** subset now passes that gate and a first
+> **real** U-Net vs Attention U-Net comparison ran on MPS (see `docs/comparison/real_experiment_cloudsen12.md`).
+> That run is a **bounded first experiment** (32 samples, one small config, 12 epochs, 3 seeds) — **not** the
+> frozen AC-4 acceptance benchmark — so the formal KPI values below **remain NOT YET MEASURED**. The bounded
+> run's measured signal (thin-cloud IoU mean +0.050 for Attention U-Net, with a cloud-shadow trade-off →
+> overall MIXED) is recorded there, explicitly separate from these acceptance KPIs.
 
 ---
 

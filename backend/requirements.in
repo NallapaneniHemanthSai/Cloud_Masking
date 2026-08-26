@@ -32,6 +32,9 @@ pandas>=2.2,<3.0
 
 # --- Geospatial / imaging ----------------------------------------------------------------------
 rasterio>=1.4,<2.0
+# tacoreader: official CloudSEN12+ access library (ADR-0012). Verified route (2026-08):
+#   tacoreader.load("tacofoundation:cloudsen12-l1c")  — needs tacoreader>=0.5.3 + rasterio. CC0-1.0.
+tacoreader>=0.5.3
 opencv-python-headless>=4.10,<5.0
 albumentations>=1.4,<2.0
 Pillow>=11.0,<12.0
