@@ -1,0 +1,46 @@
+# Build-context excludes for the Docker images (Milestone 17).
+# The Compose build context is the repository root, so this keeps the context source-only and the
+# clean-env rebuild reproducible (Risk R-12). See ADR-0017.
+
+# Python virtualenvs / caches
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Node / frontend build artifacts (rebuilt inside the image)
+**/node_modules/
+**/dist/
+frontend/dist/
+
+# Runtime / generated state (never baked into an image)
+outputs/
+mlruns/
+*.db
+*.sqlite
+*.sqlite3
+
+# Real datasets (git-ignored, potentially large — never sent to the daemon)
+data/raw/
+data/external/
+data/processed/
+
+# VCS / local env / editor
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
+
+# Docs & CI are not needed to build the images
+docs/
+*.md
+!docker/README.md
+.github/
+notebooks/

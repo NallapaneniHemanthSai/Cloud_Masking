@@ -1,0 +1,52 @@
+# Backend runtime dependencies — Milestone 17 (Docker), PINNED for a reproducible clean-env build.
+#
+# Versions are captured verbatim from the working project venv (backend/.venv, Python 3.11) so the
+# container matches the environment M13-M16 were verified against. See ADR-0017.
+#
+# SCOPE — this is the exact set the deployed system imports, no more and no less. It was derived by
+# auditing every `import` under backend/app (not guessed), so the container runs *every* API flow:
+# /health /version /metrics /models /train /predict /evaluate /history /upload /status (+degraded,
+# recovery) /lineage /pipeline /acceptance /docs.
+#
+# GDAL/geo (Risk R-12): rasterio's manylinux wheel bundles GDAL, so pinning rasterio gives a
+# reproducible geo stack on python:3.11-slim without a heavier base image or a system GDAL install.
+#
+# DELIBERATELY ABSENT (audited: zero import sites under app/, so excluding them removes no capability):
+#   torchvision, torchmetrics, mlflow, opencv-python-headless, scikit-learn, scikit-image, Pillow,
+#   pandas, scipy.
+# DELIBERATELY ABSENT (optional, guarded, not on any served path):
+#   matplotlib      -- only app/visualization/backends.py, which degrades to the NullBackend.
+#   albumentations  -- only app/preprocessing/augmentation.py, guarded by _require_albumentations().
+# DELIBERATELY ABSENT (by policy, not by weight):
+#   tacoreader      -- the CloudSEN12+ acquisition route. A deployment image must not be able to pull
+#                      datasets; real-data acquisition stays a host/operator action (ADR-0012).
+
+# --- Web / API ---------------------------------------------------------------------------------
+fastapi==0.115.14
+uvicorn[standard]==0.34.3
+starlette==0.46.2
+pydantic==2.13.4
+pydantic-settings==2.15.0
+python-multipart==0.0.32
+
+# --- Persistence -------------------------------------------------------------------------------
+SQLAlchemy==2.0.52
+
+# --- Deep learning (CPU wheel; MPS is host-only -- see ADR-0002 / ADR-0017) ---------------------
+# Required by /train and /predict. Reached only through the guarded accessor app/models/_torch.py.
+# Installed in an EARLIER Dockerfile layer from https://download.pytorch.org/whl/cpu, which resolves
+# it to 2.13.0+cpu. Listing it here keeps the pin visible and asserts the version; pip finds the
+# requirement already satisfied and does NOT fall back to the PyPI wheel (which would pull ~445 MB of
+# nvidia-cudnn-cu13 and friends for a GPU that does not exist in this container).
+torch==2.13.0
+
+# --- Numerics ----------------------------------------------------------------------------------
+numpy==1.26.4
+
+# --- Geospatial (Risk R-12: bundled GDAL) ------------------------------------------------------
+rasterio==1.4.4
+
+# --- Utilities ---------------------------------------------------------------------------------
+PyYAML==6.0.3
+requests==2.34.2
+certifi==2026.7.22

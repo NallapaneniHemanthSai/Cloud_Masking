@@ -1,17 +1,87 @@
-# Docker Compose — PLACEHOLDER (Milestone 2 scaffold).
-# Wiring (service networking, volumes, env, MLflow, healthchecks) is completed in Milestone 17.
-# Do NOT run `docker compose up` at Milestone 2 — the images are placeholders.
+# Docker Compose — Cloud Masking (Milestone 17).
+# Replaces the Milestone-2 placeholder. Two images (backend API + nginx frontend) on a private
+# network, health-gated startup order, and a named volume for the SQLite/app data. See ADR-0017.
+#
+# Usage (from the repo root):
+#   docker compose -f docker/docker-compose.yml build
+#   docker compose -f docker/docker-compose.yml up -d
+#   # UI:  http://localhost:${FRONTEND_PORT:-8080}      API: http://localhost:${BACKEND_PORT:-8000}
+#
+# Configuration is environment-driven with safe defaults and NO secrets (values below may be
+# overridden via a git-ignored .env file next to this compose file, or the shell environment).
+
+name: cloud-masking
 
 services:
   backend:
     build:
       context: ..
       dockerfile: docker/backend.Dockerfile
-    # ports/env/volumes/healthcheck added in M17
-    profiles: ["placeholder"]
+    image: cloud-masking-backend:0.17.0
+    environment:
+      # Bind all interfaces inside the container so Compose can publish the port.
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      APP_ENV: "${APP_ENV:-production}"
+      RUN_PROFILE: "${RUN_PROFILE:-smoke}"
+      RANDOM_SEED: "${RANDOM_SEED:-42}"
+      # Persist all application state (SQLite DB + uploads + mlruns) on the named volume.
+      OUTPUTS_DIR: "/data"
+      DATABASE_URL: "sqlite:////data/cloud_masking.db"
+      MLFLOW_TRACKING_URI: "file:/data/mlruns"
+    volumes:
+      - cloud-masking-data:/data
+      # Optional: expose the host's (git-ignored) datasets/checkpoints read-only. Off by default so
+      # the stack is self-contained and a clean checkout needs nothing extra.
+      # - ../data:/app/data:ro
+      # - ../models:/app/models:ro
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+os.environ.get('API_PORT','8000')+'/health', timeout=3).status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - cloud-masking
+    restart: unless-stopped
 
   frontend:
     build:
       context: ..
       dockerfile: docker/frontend.Dockerfile
-    profiles: ["placeholder"]
+      args:
+        # Same-origin API base; nginx proxies /api/* to the backend service below.
+        VITE_API_BASE_URL: "/api"
+    image: cloud-masking-frontend:0.17.0
+    environment:
+      # Substituted into docker/nginx.conf.template at container start.
+      BACKEND_HOST: "backend"
+      BACKEND_PORT: "8000"
+      NGINX_ENVSUBST_FILTER: "^BACKEND_"
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - cloud-masking
+    restart: unless-stopped
+
+# Private bridge network: the frontend reaches the API by the service DNS name `backend`; only the
+# published host ports above are reachable from outside.
+networks:
+  cloud-masking:
+    driver: bridge
+
+# Application state lives here, not in the image, so it survives container replacement.
+volumes:
+  cloud-masking-data:

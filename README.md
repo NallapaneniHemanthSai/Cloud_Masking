@@ -16,7 +16,7 @@ cloud-vs-bright-surface contribution, and quantified downstream impact on a chan
 | **Python** | **3.11.x only** | Geo/ML wheels + stable PyTorch Apple-Silicon (MPS) support; host 3.14 not used. See [ADR-0004](docs/adr/ADR-0004-python-runtime.md). |
 | **Node** | **≥ 20** | Frontend (React + TS + Vite), scaffolded in M14. |
 | **Compute** | Apple Silicon (MPS) / CPU | No CUDA; device auto-detect CUDA > MPS > CPU. See [ADR-0002](docs/adr/ADR-0002-compute-environment.md). |
-| **Docker** | optional | Deployment images authored in M17. |
+| **Docker** | optional | Deployment images + Compose stack (M17); `docker compose up` runs the system. See [`docs/deployment/`](docs/deployment/README.md). |
 
 ## Project structure
 
@@ -32,7 +32,7 @@ Cloud_Masking/
 │   └── README.md
 ├── frontend/           # React + TypeScript + Vite (scaffolded M14)
 │   └── src/            # components · pages · services · hooks · utils · assets
-├── docker/             # Dockerfiles + compose (placeholders; M17)
+├── docker/             # backend/frontend Dockerfiles + nginx + compose (M17)
 ├── docs/               # planning/ · adr/ (M1); user/dev/deploy guides (M18)
 ├── data/               # raw/ · processed/ · samples/  (git-ignored contents)
 ├── models/             # checkpoints/ trained weights (git-ignored)
@@ -389,6 +389,43 @@ Verified: 13 M16 tests; the harness CLI (deterministic content hash; non-zero ex
 `GET /api/acceptance` through the Vite proxy; and a **browser render** of the Acceptance page (all NT-1..5
 PASS, KPI NOT YET MEASURED).
 
+## Deployment — Docker & Compose (Milestone 17)
+
+Two images + a Compose stack run the system from a clean checkout ([ADR-0017](docs/adr/ADR-0017-deployment-containerization.md);
+operator guide [`docs/deployment/`](docs/deployment/README.md)):
+
+- **backend** — `python:3.11-slim`, **every dep pinned** in `docker/requirements-backend.txt` (audited
+  import set: incl. CPU **torch** + **rasterio/GDAL** — Risk R-12; zero-import heavy libs excluded),
+  non-root, env-driven stdlib `/health` healthcheck.
+- **frontend** — multi-stage `node:20-alpine` build → `nginx:1.27-alpine` static serve; nginx (rendered
+  from an envsubst template) proxies `/api/*` → `backend:8000/*` (strips `/api`, mirroring the Vite dev
+  proxy — no backend CORS change) with **runtime DNS re-resolution** so it survives a backend restart.
+- **compose** — named bridge network, **health-gated** startup, a **named volume** (`cloud-masking-data`)
+  for the SQLite/app data; env-driven ports (`BACKEND_PORT`/`FRONTEND_PORT`), **no secrets**.
+
+```bash
+docker compose -f docker/docker-compose.yml up -d --build
+# UI http://localhost:8080 · API/Swagger http://localhost:8000/docs
+```
+
+**Every** endpoint runs in-container (incl. `/train` & `/predict`), but container torch is **CPU-only**
+(**MPS is host-only**), so inference/training is for *functional*, not benchmark, use. Deployed results
+stay **SYNTHETIC/DEMO** — KPIs **NOT YET MEASURED**, M11 **MIXED** unchanged.
+
+```bash
+backend/.venv/bin/python backend/tests/test_deployment.py          # 34 static checks, no daemon needed
+backend/.venv/bin/python backend/scripts/verify_deployment.py      # black-box probe of a running stack
+```
+
+Verified live: `build --no-cache` green; health-gated `compose up`; **9/9** deployment checks via the
+API *and* the nginx `/api` proxy; a real browser render of the deployed SPA (Dashboard + Acceptance,
+NT-1..5 all PASS); state survived a restart **and** a full `down`/`up`; the proxy survived a backend
+**IP change** (172.20.0.2 → 172.20.0.4) without touching the frontend; env overrides took effect;
+acceptance hash identical host vs container. **Risk R-12 was confirmed for real** — the first clean
+build died on `ImportError: libexpat.so.1` (rasterio's wheel bundles GDAL but still links system libs
+`python:3.11-slim` omits), now fixed with an explicit `libexpat1` layer plus **build-time import
+assertions** so the build fails loudly instead of a user hitting a runtime 500.
+
 ## Prerequisites (for later milestones — nothing is installed at M2)
 
 - Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
@@ -429,10 +466,17 @@ cd backend && python -c "import importlib; [importlib.import_module(m) for m in 
 
 ## Project progress
 
-**Current status:** **Milestone 16 (Testing / acceptance harness D5) complete** — the acceptance harness now
-proves the five mandatory negative tests **NT-1..NT-5** (each with a pass + fail fixture), reusing M8/M9 and
-the M15 degraded/recovery/lineage infra; **safety properties PASS on synthetic fixtures while formal KPI/AC-4
-acceptance stays NOT YET MEASURED** (never fabricated). Earlier, **M15 (Integration)** added degraded mode +
+**Current status:** **Milestone 17 (Docker / deployment) complete** — the system is containerized as a
+backend API image (`python:3.11-slim`, GDAL/geo deps **pinned** — Risk R-12) and a multi-stage nginx
+frontend image, wired by `docker/docker-compose.yml` (private network, health-gated startup, a named volume
+for the SQLite/app data); `docker compose up` runs the system from a clean checkout. Configuration is
+env-driven with **no secrets**; the backend bundles **CPU torch** so every endpoint runs (MPS host-only,
+so `/train`/`/predict` are functional not benchmark); deployed results stay **SYNTHETIC/DEMO** (KPIs
+**NOT YET MEASURED**, M11 **MIXED** unchanged).
+Before it, **Milestone 16 (Testing / acceptance harness D5)** proved the five mandatory negative tests
+**NT-1..NT-5** (each with a pass + fail fixture), reusing M8/M9 and the M15 degraded/recovery/lineage infra;
+**safety properties PASS on synthetic fixtures while formal KPI/AC-4 acceptance stays NOT YET MEASURED**
+(never fabricated). Earlier, **M15 (Integration)** added degraded mode +
 recovery + NT-5 in `db`/`services`; **M14 (Frontend)** delivered the React/TS/Vite SPA over the M13 API; and
 **M13 (Backend API)** exposed the M6–M12 capabilities as a FastAPI service layer (results SYNTHETIC /
 VALIDATION ONLY; M11 **MIXED** conclusion preserved throughout). Previously, the **first real experiment** was
@@ -467,7 +511,7 @@ remain separately labelled SYNTHETIC.
 ✅ Milestone 14 – Frontend
 ✅ Milestone 15 – Integration
 ✅ Milestone 16 – Testing (acceptance harness / D5)
-⬜ Milestone 17 – Docker
+✅ Milestone 17 – Docker (deployment & clean-environment)
 ⬜ Milestone 18 – Documentation
 ⬜ Milestone 19 – Research Paper
 ⬜ Milestone 20 – Final Delivery (Presentation)

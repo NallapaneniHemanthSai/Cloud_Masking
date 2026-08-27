@@ -109,6 +109,8 @@ DATASET_MANIFEST_VERSION: str = "0.12.0"
 API_VERSION: str = "0.13.0"
 #: Version stamped onto acceptance-harness reports (Milestone 16, deliverable D5).
 ACCEPTANCE_VERSION: str = "0.16.0"
+#: Version of the deployment/containerization surface (Milestone 17 — Docker images + Compose).
+DEPLOYMENT_VERSION: str = "0.17.0"
 DEFAULT_PATCH_SIZE: int = 512          # capped further for the MPS envelope in profiles (ADR-0002)
 DEFAULT_PATCH_OVERLAP: int = 0         # pixels of overlap between adjacent patches
 DEFAULT_RANDOM_SEED: int = 42          # global reproducibility seed

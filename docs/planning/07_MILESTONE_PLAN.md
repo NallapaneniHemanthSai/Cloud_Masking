@@ -144,5 +144,28 @@
   properties PASS on synthetic fixtures; KPI/AC-4 acceptance NOT YET MEASURED** (never fabricated); M11
   **MIXED** untouched. Verified: 13 M16 tests + harness CLI + live `/api/acceptance` + browser render; M11
   (23) / M12 (18) / M13 (15) / M15 (10) green; frontend build/typecheck clean. `docs/acceptance/`.
-- **M17–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
+- **M17: COMPLETE** (awaiting approval) — Docker / deployment: ADR-0017, functional **backend** image
+  (`python:3.11-slim`, deps **pinned** in `docker/requirements-backend.txt` incl. **rasterio/GDAL** —
+  Risk R-12; non-root; stdlib `/health` healthcheck) and a multi-stage **frontend** image
+  (`node:20-alpine` build → `nginx:1.27-alpine` static serve + `/api`→`backend:8000` proxy mirroring the
+  Vite rewrite, ADR-0014). `docker/docker-compose.yml` wires a private network, **health-gated** startup,
+  and a **named volume** for the SQLite/app data (`sqlite:////data/cloud_masking.db`); the nginx site is
+  an envsubst **template** with Docker-DNS **runtime re-resolution** (proxy survives a backend restart);
+  repo-root `.dockerignore` for a source-only, reproducible clean-env rebuild. Configuration is env-driven
+  with safe defaults and **no secrets**; no earlier-milestone semantics changed; NT-1..5 + M11 **MIXED**
+  untouched. Backend bundles **CPU torch** (audited import set; MPS host-only) so **every** endpoint runs
+  in-container; deployed results are **SYNTHETIC/DEMO** only, KPIs **NOT YET MEASURED**. New CLI
+  `scripts/verify_deployment.py` (black-box stack probe, non-zero exit) + `tests/test_deployment.py`
+  (34 static contract tests, no daemon needed). **R-12 confirmed in practice:** the first clean build
+  failed with `ImportError: libexpat.so.1` — rasterio's wheel bundles GDAL but still links system libs
+  absent from `slim`; fixed with an explicit `libexpat1` layer plus **build-time import assertions**
+  (and a no-CUDA-payload assertion, torch coming from the CPU wheel index). **Verified live:**
+  `build --no-cache` green; `compose up` health-gated; 9/9 deployment checks through both the API and
+  the nginx `/api` proxy; `/train`+`/predict` answer 200 in-container on CPU; state survived
+  restart **and** a full `down`/`up` (2→3 rows); proxy survived a backend **IP change** (172.20.0.2 →
+  172.20.0.4) with the frontend untouched; env overrides (ports/`APP_ENV`/`LOG_LEVEL`) took effect;
+  acceptance content hash identical host vs container (`53b906bbc38f`); non-root uid 10001; no secrets
+  in either image. Regressions green: M11 23 / M12 18 / M13 15 / M15 10 / M16 13 / M17 34; imports
+  100/100; structure 43 dirs + 203 files; frontend typecheck+build clean. `docs/deployment/`.
+- **M18–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
   original plan's "Change detection" work follows in a later milestone.)*

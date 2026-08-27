@@ -1,0 +1,57 @@
+# nginx site template — Cloud Masking frontend (Milestone 17).
+#
+# Rendered at container start by the nginx image's envsubst entrypoint
+# (/etc/nginx/templates/*.template -> /etc/nginx/conf.d/*). Only ${BACKEND_*} placeholders are
+# substituted (NGINX_ENVSUBST_FILTER=^BACKEND_), so nginx's own $variables are left untouched.
+#
+# The `/api/<path>` -> `backend:8000/<path>` rewrite strips the `/api` prefix, exactly mirroring the
+# Vite dev-proxy rewrite in frontend/vite.config.ts, so the SPA's same-origin `/api` contract holds in
+# production with no backend CORS change (ADR-0014 / ADR-0017).
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Docker's embedded DNS. Re-resolving the upstream (rather than pinning the IP nginx saw at
+    # startup) is what lets the proxy survive a `docker compose restart backend`, which hands the
+    # backend container a new IP. Required for the M17 restart/recovery behaviour.
+    resolver 127.0.0.11 ipv6=off valid=10s;
+
+    # Upload ceiling for POST /upload.
+    client_max_body_size 25m;
+
+    # Liveness endpoint for the container healthcheck — served by nginx itself, so it stays green
+    # (and reports "frontend is up") independently of backend availability.
+    location = /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    # API reverse proxy: /api/<path> -> http://<BACKEND_HOST>:<BACKEND_PORT>/<path>
+    location ^~ /api/ {
+        # `set` + a variable in proxy_pass forces runtime DNS resolution via the resolver above.
+        set $cm_backend "http://${BACKEND_HOST}:${BACKEND_PORT}";
+        rewrite ^/api/(.*)$ /$1 break;
+        proxy_pass $cm_backend;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Predictions/evaluations can take a while; keep the client from timing out early.
+        proxy_connect_timeout 10s;
+        proxy_read_timeout   180s;
+        proxy_send_timeout   180s;
+    }
+
+    # SPA fallback: client-side routes resolve to index.html.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
