@@ -140,9 +140,10 @@ def test_every_referenced_adr_file_exists() -> None:
 
 
 def test_adr_numbering_has_no_unexpected_gaps() -> None:
+    """ADRs run 0001..N with exactly one intentional gap (0005 was never issued)."""
     numbers = sorted(int(p.name[4:8]) for p in (DOCS / "adr").glob("ADR-*.md"))
-    assert numbers[0] == 1 and numbers[-1] == 18
-    missing = sorted(set(range(1, 19)) - set(numbers))
+    assert numbers[0] == 1, "ADR numbering must start at 0001"
+    missing = sorted(set(range(1, numbers[-1] + 1)) - set(numbers))
     assert missing == [5], f"unexpected ADR gaps (only 0005 is intentionally unissued): {missing}"
 
 
@@ -181,8 +182,18 @@ def test_readmes_do_not_claim_the_project_is_a_scaffold() -> None:
 
 
 def test_readme_reports_the_current_milestone() -> None:
+    """Whatever milestone the plan says is latest-complete, the README must say the same.
+
+    Derived from the plan rather than hard-coded, so this check keeps working each milestone instead
+    of needing to be edited (and therefore silently weakened) every time.
+    """
+    plan = _read("docs/planning/07_MILESTONE_PLAN.md")
+    completed = sorted(int(n) for n in re.findall(r"\*\*M(\d+): COMPLETE\*\*", plan))
+    assert completed, "the milestone plan records no completed milestone"
+    latest = completed[-1]
     readme = _read("README.md")
-    assert "Milestone 18" in readme, "the root README must state the current milestone"
+    assert f"Milestone {latest}" in readme or f"M{latest} " in readme, (
+        f"the plan's latest completed milestone is M{latest}; the root README does not mention it")
 
 
 def test_generated_api_reference_is_marked_generated() -> None:

@@ -185,5 +185,23 @@
   unchanged (15 routes); **no measurement produced** — KPIs stay **NOT YET MEASURED**, M11 stays
   **MIXED**. Verified: M18 19/19; M11 23 / M12 18 / M13 15 / M15 10 / M16 13 / M17 34; imports 100/100;
   structure 47 dirs + 212 files; frontend typecheck+build clean; live Docker stack 9/9. `docs/`.
-- **M19–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
+- **M19: COMPLETE** (awaiting approval) — Research paper (**D7**): ADR-0019 (evidence policy) +
+  `paper/` — the **paper draft** (19 sections), **literature review** (11 sources), **BibTeX**
+  references, **comparison table**, **ablation template**, and the **results write-up**. Every citation
+  was verified against **Crossref** (10 works) or the **arXiv API** (2 preprints) rather than written
+  from memory. Every claim is typed as SOURCE-DERIVED FACT / PROJECT RESULT / INTERPRETATION, and the
+  M11 numbers are **transcribed, not re-derived**. The **MIXED** conclusion is preserved and the
+  compression "Attention U-Net is better" is explicitly forbidden — thin cloud +0.050 (3/3 seeds) *and*
+  cloud shadow −0.018 (3/3 seeds) are always reported together, along with the seed-dependent verdict
+  (IMPROVED / REGRESSION / REGRESSION). All **8 ablations are NOT EXECUTED**; no comparison against
+  published methods; the **FR-2** `run_reference.sh` + oracle gap is reported as an **O5 blocker**, not
+  worked around. `tests/test_paper.py` (**22 checks**) enforces the policy mechanically: citation keys
+  resolve, every number in the results is either present in the M11 record **or an arithmetically
+  verified derived mean**, parameter counts are re-derived from the model code (484,228 / 490,005), no
+  statistical over-claim, no ablation unlabelled. Both the drift check and the over-claim check were
+  **proven able to fail** by injection. **No new measurement**; KPIs stay **NOT YET MEASURED**. The root
+  **README was also restructured from a milestone diary into a project-oriented README** (569 → 201
+  lines) at the owner's request. Verified: M19 22/22; M11 23 / M12 18 / M13 15 / M15 10 / M16 13 /
+  M17 34 / M18 19; imports 100/100; frontend build clean. `paper/`.
+- **M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
   original plan's "Change detection" work follows in a later milestone.)*

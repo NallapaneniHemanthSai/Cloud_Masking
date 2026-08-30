@@ -113,6 +113,8 @@ ACCEPTANCE_VERSION: str = "0.16.0"
 DEPLOYMENT_VERSION: str = "0.17.0"
 #: Version of the documentation/release-packaging surface (Milestone 18 — D6 guides + API reference).
 DOCS_VERSION: str = "0.18.0"
+#: Version of the research-paper surface (Milestone 19 — D7 paper, literature, ablation template).
+PAPER_VERSION: str = "0.19.0"
 DEFAULT_PATCH_SIZE: int = 512          # capped further for the MPS envelope in profiles (ADR-0002)
 DEFAULT_PATCH_OVERLAP: int = 0         # pixels of overlap between adjacent patches
 DEFAULT_RANDOM_SEED: int = 42          # global reproducibility seed

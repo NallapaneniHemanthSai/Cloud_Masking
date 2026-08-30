@@ -10,6 +10,7 @@ Everything written about the Cloud Masking system. Start with the row that match
 | **Call the API** | [API reference](api/README.md) *(generated)* |
 | **Deploy it** | [Deployment guide](deployment/README.md) |
 | **Review it** *(O5)* | [Package manifest](MANIFEST.md) → [Acceptance harness](acceptance/README.md) → [KPIs & negative tests](planning/06_KPI_ACCEPTANCE.md) |
+| **Read the research** | [Paper](../paper/00_RESEARCH_PAPER.md) · [literature review](../paper/01_LITERATURE_REVIEW.md) · [references](../paper/references.bib) |
 | **Know what was actually measured** | [Real experiment report](comparison/real_experiment_cloudsen12.md) |
 
 > **Before citing any number from this project:** exactly one result is REAL — the bounded
@@ -28,6 +29,7 @@ Everything written about the Cloud Masking system. Start with the row that match
 | [API reference](api/README.md) | 15 endpoints, 23 DTOs — generated from OpenAPI |
 | [Deployment](deployment/README.md) | Images, compose, volumes, health checks, restart behaviour |
 | [Package manifest](MANIFEST.md) | Inventory, provenance, licences, evidence status |
+| [Research paper (D7)](../paper/README.md) | Paper draft, literature review, comparison table, ablation template, results |
 
 ## Planning & acceptance (D1)
 
@@ -84,6 +86,7 @@ Numbered, dated, and stating what was **rejected** as well as chosen. ADR-0005 w
 | [0016](adr/ADR-0016-acceptance-harness.md) | D5 acceptance harness |
 | [0017](adr/ADR-0017-deployment-containerization.md) | Docker + Compose |
 | [0018](adr/ADR-0018-documentation-and-release-packaging.md) | Documentation & release packaging |
+| [0019](adr/ADR-0019-research-paper-and-evidence-policy.md) | Research paper structure & evidence policy |
 
 ---
 
@@ -93,6 +96,7 @@ Numbered, dated, and stating what was **rejected** as well as chosen. ADR-0005 w
 
 ```bash
 backend/.venv/bin/python backend/tests/test_documentation.py          # required docs, links, labels
+backend/.venv/bin/python backend/tests/test_paper.py                   # research-evidence integrity
 backend/.venv/bin/python backend/scripts/generate_api_docs.py --check # API reference not stale
 ```
 

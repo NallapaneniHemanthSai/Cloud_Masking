@@ -1,0 +1,150 @@
+% References — Cloud Masking capstone (Milestone 19 / D7)
+%
+% EVERY entry below was verified against primary metadata, not written from memory:
+%   - Crossref REST API (api.crossref.org/works/<DOI>) for published works
+%   - arXiv API (export.arxiv.org/api/query) for preprints of record
+% Verification is re-runnable: backend/tests/test_paper.py checks that every \cite key used in the
+% paper resolves to an entry here, and paper/01_LITERATURE_REVIEW.md records the verified metadata.
+%
+% Selection rule (ADR-0019): peer-reviewed publications, official dataset papers, or archival
+% preprints of record only. No blogs or vendor pages as scientific evidence.
+
+% ---------------------------------------------------------------------------------------------
+% Datasets
+% ---------------------------------------------------------------------------------------------
+@article{aybar2022cloudsen12,
+  title   = {CloudSEN12, a global dataset for semantic understanding of cloud and cloud shadow in Sentinel-2},
+  author  = {Aybar, Cesar and Ysuhuaylas, Luis and Loja, Jhomira and Gonzales, Karen and
+             Herrera, Fernando and Bautista, Lesly and Yali, Roy and Flores, Angie and
+             Diaz, Lissette and Cuenca, Nicole and Espinoza, Wendy and Prudencio, Fernando and
+             Llactayo, Valeria and Montero, David and Sudmanns, Martin and Tiede, Dirk and
+             Mateo-Garc{\'i}a, Gonzalo and G{\'o}mez-Chova, Luis},
+  journal = {Scientific Data},
+  volume  = {9},
+  number  = {1},
+  pages   = {782},
+  year    = {2022},
+  doi     = {10.1038/s41597-022-01878-2}
+}
+
+@article{aybar2024cloudsen12plus,
+  title   = {CloudSEN12+: The largest dataset of expert-labeled pixels for cloud and cloud shadow
+             detection in Sentinel-2},
+  author  = {Aybar, Cesar and Bautista, Lesly and Montero, David and Contreras, Julio and
+             Ayala, Daryl and Prudencio, Fernando and Loja, Jhomira and Ysuhuaylas, Luis and
+             Herrera, Fernando and Gonzales, Karen and Valladares, Jeanett and Flores, Lucy A. and
+             Mamani, Evelin and Qui{\~n}onez, Maria and Fajardo, Rai and Espinoza, Wendy and
+             Limas, Antonio and Yali, Roy and Alc{\'a}ntara, Alejandro and Leyva, Martin and
+             Loayza-Muro, Ra{\'u}l and Willems, Bram and Mateo-Garc{\'i}a, Gonzalo and
+             G{\'o}mez-Chova, Luis},
+  journal = {Data in Brief},
+  volume  = {56},
+  pages   = {110852},
+  year    = {2024},
+  doi     = {10.1016/j.dib.2024.110852}
+}
+
+@inproceedings{daudt2018oscd,
+  title     = {Urban Change Detection for Multispectral Earth Observation Using Convolutional
+               Neural Networks},
+  author    = {Caye Daudt, Rodrigo and Le Saux, Bertrand and Boulch, Alexandre and Gousseau, Yann},
+  booktitle = {IGARSS 2018 -- 2018 IEEE International Geoscience and Remote Sensing Symposium},
+  pages     = {2115--2118},
+  year      = {2018},
+  doi       = {10.1109/IGARSS.2018.8518015}
+}
+
+% ---------------------------------------------------------------------------------------------
+% Architectures
+% ---------------------------------------------------------------------------------------------
+@inproceedings{ronneberger2015unet,
+  title     = {U-Net: Convolutional Networks for Biomedical Image Segmentation},
+  author    = {Ronneberger, Olaf and Fischer, Philipp and Brox, Thomas},
+  booktitle = {Medical Image Computing and Computer-Assisted Intervention (MICCAI) 2015},
+  series    = {Lecture Notes in Computer Science},
+  pages     = {234--241},
+  year      = {2015},
+  doi       = {10.1007/978-3-319-24574-4_28}
+}
+
+@inproceedings{oktay2018attentionunet,
+  title     = {Attention U-Net: Learning Where to Look for the Pancreas},
+  author    = {Oktay, Ozan and Schlemper, Jo and Le Folgoc, Loic and Lee, Matthew and
+               Heinrich, Mattias and Misawa, Kazunari and Mori, Kensaku and McDonagh, Steven and
+               Hammerla, Nils Y. and Kainz, Bernhard and Glocker, Ben and Rueckert, Daniel},
+  booktitle = {Medical Imaging with Deep Learning (MIDL)},
+  year      = {2018},
+  eprint    = {1804.03999},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CV}
+}
+
+% ---------------------------------------------------------------------------------------------
+% Cloud detection — classical baselines and comparisons
+% ---------------------------------------------------------------------------------------------
+@article{zhu2012fmask,
+  title   = {Object-based cloud and cloud shadow detection in Landsat imagery},
+  author  = {Zhu, Zhe and Woodcock, Curtis E.},
+  journal = {Remote Sensing of Environment},
+  volume  = {118},
+  pages   = {83--94},
+  year    = {2012},
+  doi     = {10.1016/j.rse.2011.10.028}
+}
+
+@article{qiu2019fmask4,
+  title   = {Fmask 4.0: Improved cloud and cloud shadow detection in Landsats 4--8 and Sentinel-2
+             imagery},
+  author  = {Qiu, Shi and Zhu, Zhe and He, Binbin},
+  journal = {Remote Sensing of Environment},
+  volume  = {231},
+  pages   = {111205},
+  year    = {2019},
+  doi     = {10.1016/j.rse.2019.05.024}
+}
+
+@article{tarrio2020comparison,
+  title   = {Comparison of cloud detection algorithms for Sentinel-2 imagery},
+  author  = {Tarrio, Katelyn and Tang, Xiaojing and Masek, Jeffrey G. and Claverie, Martin and
+             Ju, Junchang and Qiu, Shi and Zhu, Zhe and Woodcock, Curtis E.},
+  journal = {Science of Remote Sensing},
+  volume  = {2},
+  pages   = {100010},
+  year    = {2020},
+  doi     = {10.1016/j.srs.2020.100010}
+}
+
+@article{li2022gcdbunet,
+  title   = {GCDB-UNet: A novel robust cloud detection approach for remote sensing images},
+  author  = {Li, Xian and Yang, Xiaofei and Li, Xutao and Lu, Shiyu and Ye, Yunming and Ban, Yifang},
+  journal = {Knowledge-Based Systems},
+  volume  = {238},
+  pages   = {107890},
+  year    = {2022},
+  doi     = {10.1016/j.knosys.2021.107890}
+}
+
+% ---------------------------------------------------------------------------------------------
+% Class imbalance / segmentation losses
+% ---------------------------------------------------------------------------------------------
+@inproceedings{milletari2016vnet,
+  title     = {V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation},
+  author    = {Milletari, Fausto and Navab, Nassir and Ahmadi, Seyed-Ahmad},
+  booktitle = {2016 Fourth International Conference on 3D Vision (3DV)},
+  pages     = {565--571},
+  year      = {2016},
+  doi       = {10.1109/3DV.2016.79}
+}
+
+@inproceedings{sudre2017generalised,
+  title     = {Generalised Dice Overlap as a Deep Learning Loss Function for Highly Unbalanced
+               Segmentations},
+  author    = {Sudre, Carole H. and Li, Wenqi and Vercauteren, Tom and Ourselin, Sebastien and
+               Cardoso, M. Jorge},
+  booktitle = {Deep Learning in Medical Image Analysis and Multimodal Learning for Clinical
+               Decision Support},
+  series    = {Lecture Notes in Computer Science},
+  pages     = {240--248},
+  year      = {2017},
+  doi       = {10.1007/978-3-319-67558-9_28}
+}

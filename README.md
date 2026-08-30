@@ -1,569 +1,201 @@
 # Cloud Masking Across Thin Cloud, Haze, Snow and Bright Surfaces
 
-KL University two-semester engineering capstone (CP1 + CP2). An end-to-end system for multi-spectral
-satellite **cloud masking**, with stratified evaluation on thin cloud, snow and bright surfaces, a
-cloud-vs-bright-surface contribution, and quantified downstream impact on a change-detection task.
+An end-to-end deep-learning system for **four-class cloud segmentation in Sentinel-2 imagery** —
+separating *clear*, *thick cloud*, *thin cloud*, and *cloud shadow* — built around the cases that
+actually break cloud masks: semi-transparent cloud and bright surfaces such as snow, sand and rooftops.
 
-> **Status: Milestone 18 (Documentation) complete — 18 of 20 milestones.** The system is fully
-> operable: dataset pipeline, U-Net + Attention U-Net, training/evaluation/failure analysis, a FastAPI
-> backend, a React frontend, degraded mode + recovery, the D5 acceptance harness, and a Docker Compose
-> deployment. **Start here → [`docs/`](docs/README.md)** (install · user manual · developer guide ·
-> API reference · deployment · package manifest).
+Dataset pipeline → U-Net & Attention U-Net → training, evaluation and failure analysis → REST API →
+React dashboard → degraded-mode/recovery guardrails → acceptance harness → Docker deployment.
+
+**KL University two-semester engineering capstone (CP1 + CP2).**
+
+---
+
+## Why this problem
+
+A cloud mask decides which pixels enter every downstream analysis, so its errors propagate silently.
+The difficulty is not uniform: thick opaque cloud is easy, while **thin cloud mixes surface and cloud
+signal inside a single pixel** and cloud shadow is defined by illumination geometry as much as by
+spectral response.
+
+How hard? On this dataset, *expert human annotators* reached 95.7% agreement overall but only **78%
+producer's accuracy on thin cloud** — it is the class trained specialists disagree about most
+([Aybar et al. 2022](https://doi.org/10.1038/s41597-022-01878-2)). That single fact shapes the whole
+project: thin cloud is the **primary metric**, and aggregate accuracy — which is dominated by easy
+pixels — is never allowed to stand in for it.
+
+## The result
+
+> On a bounded 32-sample expert-labelled CloudSEN12+ subset (3 seeds, everything held identical except
+> the architecture), **Attention U-Net improved thin-cloud IoU in all 3 seeds (mean +0.050)** at
+> **×1.012** parameters — and **regressed cloud-shadow IoU in all 3 seeds (mean −0.018)**.
+> The decision framework returned IMPROVED for one seed and REGRESSION for two.
 >
-> **Evidence status, up front:** exactly **one** result in this project is REAL — the bounded
-> CloudSEN12+ U-Net vs Attention U-Net comparison, whose conclusion is **MIXED**. Every formal KPI is
-> **NOT YET MEASURED** (they need a frozen AC-4 dataset). Everything else the system produces is
-> **SYNTHETIC** or **DEMO** and is labelled as such wherever it is shown. Nothing is ever fabricated.
+> ### Overall verdict: **MIXED** — not a win.
 
-## Supported environment
+This is deliberately *not* summarised as "Attention U-Net is better," because the evidence does not
+support that. Full analysis: **[the paper](paper/00_RESEARCH_PAPER.md)** ·
+[measured results](paper/04_RESULTS.md) · [source record](docs/comparison/real_experiment_cloudsen12.md).
 
-| Component | Requirement | Notes |
-|-----------|-------------|-------|
-| **Python** | **3.11.x only** | Geo/ML wheels + stable PyTorch Apple-Silicon (MPS) support; host 3.14 not used. See [ADR-0004](docs/adr/ADR-0004-python-runtime.md). |
-| **Node** | **≥ 20** | Frontend (React + TS + Vite), scaffolded in M14. |
-| **Compute** | Apple Silicon (MPS) / CPU | No CUDA; device auto-detect CUDA > MPS > CPU. See [ADR-0002](docs/adr/ADR-0002-compute-environment.md). |
-| **Docker** | optional | Deployment images + Compose stack (M17); `docker compose up` runs the system. See [`docs/deployment/`](docs/deployment/README.md). |
+### What is and is not measured
 
-## Project structure
+| Status | What |
+|---|---|
+| **REAL (bounded)** | The M11 comparison above — 32 samples, 1 config, 12 epochs, 3 seeds. **Not** a benchmark. |
+| **SYNTHETIC** | All API `/train` `/predict` `/evaluate` output; pipeline-validation runs. Always badged in the UI. |
+| **DEMO** | Degraded mode, recovery, lineage replay. |
+| **NOT YET MEASURED** | **Every formal KPI** (KPI-1..6, KPI-E1..E7) and AC-1/AC-3/AC-4 — these need a frozen-envelope dataset that does not exist locally. |
+| **NOT EXECUTED** | All ablations; any comparison against published methods. |
+| **NOT BUILT** | FR-2's `run_reference.sh` + independent oracle → independent reference validation is not executable *(known gap, see [audit](docs/planning/10_DOCUMENTATION_AUDIT.md))*. |
 
-```
-Cloud_Masking/
-├── backend/            # FastAPI + PyTorch (Python 3.11)
-│   ├── app/            # api · core · models · services · preprocessing · inference
-│   │                   # training · evaluation · datasets · change_detection · db · schemas · utils
-│   ├── tests/          # structure + import tests (M2); functional tests from M6
-│   ├── configs/        # config.template.yaml · smoke.yaml · full.yaml · logging.yaml
-│   ├── scripts/        # download/validate/preprocess/train/evaluate/predict (M3+)
-│   ├── pyproject.toml · requirements.in · requirements-dev.in · .env.example
-│   └── README.md
-├── frontend/           # React + TypeScript + Vite (scaffolded M14)
-│   └── src/            # components · pages · services · hooks · utils · assets
-├── docker/             # backend/frontend Dockerfiles + nginx + compose (M17)
-├── docs/               # planning/ · adr/ (M1); user/dev/deploy guides (M18)
-├── data/               # raw/ · processed/ · samples/  (git-ignored contents)
-├── models/             # checkpoints/ trained weights (git-ignored)
-├── experiments/        # curated experiment logs / ablations / metric summaries (M7+)
-├── notebooks/          # supplementary only (never a deliverable)
-├── outputs/            # logs · mlruns · sqlite · reports (git-ignored)
-├── paper/ · presentation/ · reports/   # research (M19) · slides (M20) · evidence (M8+)
-├── .github/workflows/  # CI placeholders (manual-only: workflow_dispatch)
-├── .gitignore · .env.example
-└── README.md
-```
+Nothing is ever fabricated to fill a table. An empty cell is reported as a finding.
 
-## Architecture summary
-
-Clean architecture with dependencies pointing inward: `core` (config, constants, logging, exceptions)
-depends on nothing outside the standard library; `services` (use-cases) depend on `core`; adapters
-(`api`, `datasets`, `preprocessing`, `models`, `training`, `evaluation`, `change_detection`, `db`,
-`inference`) sit at the edge; delivery is the React frontend + Docker. Cross-cutting concerns —
-configuration, logging, experiment tracking (MLflow), and model storage (checkpoints + SQLite) — are
-shared. Two datasets are retained: **CloudSEN12** (primary, multi-class) and **On Cloud N** (reference
-benchmark, reproduced). Full detail and a component diagram are in
-[`docs/planning/03_ARCHITECTURE.md`](docs/planning/03_ARCHITECTURE.md).
-
-## Datasets
-
-Two datasets with distinct roles (see [ADR-0001](docs/adr/ADR-0001-dataset-selection.md)) — **On Cloud N
-is retained, not replaced**. Metadata below is **verified** against official sources
-([details](docs/datasets/)):
-
-| Role | Dataset | Bands / labels | Licence | Redistribution |
-|------|---------|----------------|---------|----------------|
-| **Primary** | **CloudSEN12 / CloudSEN12+** | 13-band S2 (L1C); multi-class 0=clear/1=thick/2=thin/3=shadow | **CC0-1.0** | Permitted |
-| **Reference benchmark** | **On Cloud N** | 4-band S2 L2A (B02,B03,B04,B08); binary 0/1 | Competition terms | **Prohibited** |
-
-**Folder layout:** `data/{raw/{cloudsen12,on_cloud_n}, external, manifests, metadata, samples}` — heavy
-contents under `raw/`/`processed/`/`external/` are git-ignored; provenance (`manifests/datasets.yaml`),
-metadata, and docs are tracked.
-
-**Download & verify (nothing downloads automatically at Milestone 3):**
-```bash
-python backend/scripts/download_cloudsen12.py --dry-run    # primary
-python backend/scripts/download_on_cloud_n.py --dry-run    # reference benchmark
-python backend/scripts/verify_datasets.py                  # structured provenance + integrity table
-```
-Scripts read `data/manifests/datasets.yaml`. Both datasets need manual/authenticated access (CloudSEN12
-via `tacoreader`/Hugging Face; On Cloud N via DrivenData registration + agreement), so the scripts
-**print the documented manual steps instead of bypassing them**.
-
-**Storage / expected size (verify at download):** CloudSEN12+ full is very large (hundreds of GB+); a
-curated subset is used (Milestone 4). On Cloud N training data is ≈ tens of GB (22,728 chips). Confirm
-disk before downloading (Risk R-03).
-
-**Workflows:**
-- *Provenance* — declare in `datasets.yaml` → verify access/licence in [`docs/datasets/`](docs/datasets/).
-- *Verification* — `verify_datasets.py` validates the manifest and prints a per-dataset status table
-  (manifest / directory / download / checksum / completeness / overall); not-yet-downloaded = `PENDING`
-  (not a failure); `--require-present` enforces presence.
-- *Checksum* — `checksum` is `TBD` until download; record `sha256` per artifact, then verification reports
-  `VERIFIED`/`MISMATCH` (vs `UNAVAILABLE`).
-- *Lifecycle* — `declare → verify access → download → record date+checksum → verify → preprocess (M4)`.
-
-## Preprocessing (Milestone 4)
-
-Modular pipeline under `backend/app/preprocessing/` — **no model/training code**. Full detail in
-[`docs/preprocessing/`](docs/preprocessing/).
-
-| Stage | Module | Notes |
-|-------|--------|-------|
-| Load / discover | `loader.py` | Layouts for CloudSEN12 + On Cloud N; graceful missing-dataset reporting. |
-| Validate | `validation.py` | Structured report: missing files, unsupported types, duplicate ids, inconsistent dimensions, corrupted metadata. |
-| Patch | `patching.py` | Deterministic grid + geotransform propagation. |
-| Normalize | `normalization.py` | Per-band minmax/zscore/percentile; clipping; nodata handling. |
-| Split | `splitting.py` | Reproducible, group-aware (leakage-resistant) train/val/test + manifest. |
-| Augment | `augmentation.py` | Registry/framework only (not applied during training here). |
-
-```bash
-python backend/scripts/preprocess.py --dataset on_cloud_n --patch-size 256 --overlap 32   # dry plan
-python backend/scripts/split_dataset.py --dataset cloudsen12 --seed 42                     # split manifest
-```
-
-## Visualization & EDA (Milestone 5)
-
-Backend-independent visualization + exploratory analysis under `backend/app/visualization/` — **no ML
-code**. Full detail in [`docs/visualization/`](docs/visualization/).
-
-| Area | Module | Notes |
-|------|--------|-------|
-| Backends | `backends.py` | `PlotBackend` (Null / Matplotlib); `get_backend("auto")`; matplotlib guarded. |
-| Statistics | `statistics.py` | Deterministic class/dataset/patch/split summaries from records. |
-| Inspection | `inspection.py` | `DatasetInspectionReport` (samples, sizes, missing labels, duplicates, balance). |
-| Reports | `reports.py` | `Report` → **JSON / CSV / Markdown**; dataset/patch/split/preprocessing builders. |
-| QC | `qc.py` | Structured + Markdown quality-control report. |
-| Colours | `colormap.py` | Class colour mapping + legends (hex only). |
-| Figure specs | `bands.py` / `overlays.py` / `patches.py` | RGB/false-colour, ground-truth mask/overlay, patch grid. |
-| Provenance | `manifest.py` / `session.py` | `FigureManifest` (per-figure metadata, deterministic `config_hash`) and `VisualizationSession` (primary workflow object) — full JSON export/import. |
-
-```bash
-python backend/scripts/eda_report.py --dataset on_cloud_n            # EDA (json/md/csv) + QC (md)
-python backend/scripts/eda_report.py --dataset cloudsen12 --backend null   # force graceful degradation
-```
-
-`eda_report.py` produces a top-level `<dataset>_session.json` (a `VisualizationSession` aggregating the
-dataset summary, report refs, and QC report) alongside the EDA/QC reports. When matplotlib is unavailable,
-figure rendering **degrades** (writes a `*.spec.json` metadata sidecar) while all statistics/reports keep
-working.
-
-## Baseline model (Milestone 6)
-
-Baseline **U-Net** + model infrastructure under `backend/app/models/` — **no training/inference code**.
-Full detail in [`docs/models/`](docs/models/) and [ADR-0006](docs/adr/ADR-0006-baseline-model-selection.md).
-
-| Area | Module | Notes |
-|------|--------|-------|
-| Config | `config.py` | `ModelConfig` (in/out channels, depth, base channels, activation, norm) + deterministic `config_hash`. |
-| Architecture | `unet.py` / `base.py` | U-Net `Encoder`/`DecoderStage`/`SegmentationHead`; `BaseSegmentationModel` (torch-guarded). |
-| Registry/factory | `registry.py` / `factory.py` | `ModelRegistry` (aliases/tags/version) + `ModelFactory` (config→model, summary, checkpoint metadata). |
-| Init | `initialization.py` | Xavier / Kaiming / Constant / Identity + optional `InitializationReport`. |
-| Metadata | `metadata.py` / `summary.py` / `artifact.py` | `ModelMetadata` (+ capability metadata), `CheckpointMetadata`, `ExperimentMetadata`, `ModelArtifact` (canonical saved-model metadata, deterministic `content_hash`), `ModelSummary` — all JSON serialisable. |
-
-```bash
-python backend/scripts/model_info.py --name unet --in-channels 13 --classes 4   # summary + checkpoint metadata
-```
-
-PyTorch is a guarded dependency: importing `app.models` never requires it; building a model does (clear
-`ModelError` otherwise). No weights are saved.
-
-**Improved model (Milestone 10):** **Attention U-Net** (`name="attention_unet"`, aliases `attn_unet`/`aunet`)
-is registered alongside U-Net, reusing the shared blocks and `ModelConfig`; see
-[`docs/models/improved_model.md`](docs/models/improved_model.md) and
-[ADR-0010](docs/adr/ADR-0010-improved-model-selection.md). Compare architectures (params/shapes MEASURED;
-memory/FLOPs unmeasured; performance **NOT YET MEASURED**):
-```bash
-python backend/scripts/model_compare.py --in-channels 13 --classes 4 --patch 128
-```
-
-## Training engine (Milestone 7)
-
-Configuration-driven `Trainer` under `backend/app/training/` — **no evaluation/benchmark/deployment code**.
-Full detail in [`docs/training/`](docs/training/) and [ADR-0007](docs/adr/ADR-0007-training-strategy.md).
-
-| Area | Module | Notes |
-|------|--------|-------|
-| Config | `config.py` | `TrainingConfig` (+ optimizer/scheduler/loss/checkpoint/logging/early-stopping) + deterministic `config_hash`. |
-| Engine/Trainer | `engine.py` / `trainer.py` | Epoch mechanics (forward/loss/backward/accumulation/AMP) + orchestration. |
-| Optimizer/Scheduler | `optimizer.py` / `scheduler.py` | Adam/AdamW/SGD; Cosine/Step/Plateau — selected by config. |
-| Loss | `loss.py` | cross-entropy / soft Dice / combined (the optimization objective). |
-| Checkpointing | `checkpoint.py` | best/latest, save policy, resume metadata (weights optional). |
-| Callbacks | `callbacks.py` | `CallbackEvent` enum dispatch + explicit `CallbackPriority` ordering; checkpoint/logging/early-stopping/progress — independent of the trainer. |
-| Lifecycle | `lifecycle.py` | `TrainerState` state machine (CREATED→INITIALIZED→RUNNING↔CHECKPOINTING→COMPLETED/FAILED). |
-| Artifact | `artifact.py` | `TrainingArtifact` — canonical completed-run metadata, deterministic `content_hash`. |
-| Logging | `logging.py` | `MetricSink` → JSONL/CSV/console (TensorBoard isolated behind the interface). |
-| Reproducibility | `seed.py` | seed + deterministic flags + environment capture + device resolution. |
-| Experiment | `experiment.py` | `ExperimentRun` + directory layout. |
-
-```bash
-python backend/scripts/train_smoke.py --epochs 2 --device cpu   # synthetic run (no real dataset)
-```
-
-The trainer takes any iterable of `(inputs, targets)` batches, so it's independent of the dataset layer;
-validation/eval metrics plug in at M8 via a callback without trainer changes.
-
-## Evaluation (Milestone 8)
-
-Confusion-matrix-based, **per-class-first** evaluation under `backend/app/evaluation/` — **no ML/training/
-deployment code**. Full detail in [`docs/evaluation/`](docs/evaluation/) and
-[ADR-0008](docs/adr/ADR-0008-evaluation-strategy.md).
-
-| Area | Module | Notes |
-|------|--------|-------|
-| Config | `config.py` | Binary vs multiclass modes (never mixed); deterministic `config_hash`. |
-| Confusion | `confusion.py` | Pixel-level matrix (rows=true, cols=pred); TP/FP/FN/TN; ignore label. |
-| Metrics | `metrics.py` | Per-class IoU/Dice/Precision/Recall/F1 + pixel accuracy; **explicit undefined**. |
-| Aggregation | `aggregation.py` | Macro (defined-only) / micro / weighted — accumulate stats, then compute. |
-| Runner / Stratified | `runner.py` / `stratification.py` | Accumulate → compute; Overall + Clear/Thick/**Thin**/Shadow + groups. |
-| Reports | `report.py` | JSON / CSV / Markdown (reuses the visualization Report model). |
-
-```bash
-python backend/scripts/evaluate.py --mode multiclass --split test   # SYNTHETIC demo (not real metrics)
-```
-
-**Quality guarantee:** per-class + stratified metrics are mandatory, and aggregation accumulates confusion
-statistics before computing — so a high overall score cannot conceal weak thin-cloud detection.
-
-## Failure analysis (Milestone 9)
-
-Confusing-case / failure analysis under `backend/app/failure_analysis/` — **explains** failures, does not
-repeat M8 metrics. Full detail in [`docs/failure_analysis/`](docs/failure_analysis/) and
-[ADR-0009](docs/adr/ADR-0009-confusing-case-analysis.md).
-
-| Area | Module | Notes |
-|------|--------|-------|
-| Taxonomy | `taxonomy.py` | 11 categories + **measurability** (MEASURABLE / DEFERRED / NOT MEASURABLE). |
-| Pixel/sample | `pixel_analysis.py` / `sample_analysis.py` | Per-class FN/FP/confusion (reuses M8 confusion); per-sample failures. |
-| Ranking | `ranking.py` | Deterministic order (severity→rate→count→id); dedup by sample; top-K. |
-| Stratification | `stratification.py` | By class (thin cloud visible) / error type / group. |
-| Reports / viz | `report.py` / `viz_specs.py` | JSON/CSV/MD; backend-independent confusing-case specs. |
-
-```bash
-python backend/scripts/analyze_failures.py --mode multiclass --split test   # SYNTHETIC demo
-```
-
-**Answers:** what failed, which class, FP vs FN vs class confusion, hardest samples, severity, whether
-failures concentrate in thin/thick cloud/shadow/clear, and whether cases can be visualized later.
-
-## Controlled comparison (Milestone 11)
-
-Controlled **baseline-vs-improved** comparison (U-Net vs Attention U-Net) under `backend/app/comparison/` —
-it **reuses** the M7 trainer, M8 evaluation, and M9 failure analysis (no second engine). Both arms are
-derived from a single `ComparisonConfig`, so the architecture is the **only** difference; fairness guardrails
-re-verify this. Full detail in [`docs/comparison/`](docs/comparison/) and
-[ADR-0011](docs/adr/ADR-0011-model-comparison.md).
-
-| Area | Module | Notes |
-|------|--------|-------|
-| Config / fairness | `config.py` / `guardrails.py` | Single-source `ComparisonConfig`; `check_fairness` fails on any non-architectural mismatch. |
-| Quality | `metrics.py` | Per-class + aggregate deltas from **M8** results; **thin cloud** surfaced (never hidden). |
-| Compute | `records.py` | Params **MEASURED**; timings; peak memory `NOT_MEASURED` on cpu/mps (never inferred). |
-| Failures | `failures.py` | Compares **M9** results; tests the thin-cloud hypothesis (only on real evidence). |
-| Decision | `decision.py` | `IMPROVED / NO_SIGNIFICANT_IMPROVEMENT / REGRESSION / COMPUTE_UNJUSTIFIED / INCONCLUSIVE`. |
-| Artifact / reports | `records.py` / `report.py` / `viz_specs.py` | `ModelComparisonArtifact` (deterministic hash); JSON/CSV/MD; M5 viz specs. |
-
-```bash
-python backend/scripts/compare_models.py --synthetic-smoke --epochs 1 --patch 16 --seeds 1 2 3
-```
-
-The `--synthetic-smoke` path trains both real architectures on synthetic tensors so the pipeline + compute
-are genuinely exercised (compute **MEASURED**), but quality is **SYNTHETIC / VALIDATION ONLY** and — with no
-real dataset present — real-data quality is **NOT YET MEASURED**, so the decision is **INCONCLUSIVE** (no
-winner is fabricated).
-
-## Experimental dataset pipeline (Milestone 12)
-
-Experimental-dataset **readiness** pipeline under `backend/app/datasets/` — it takes the project from
-*"dataset infrastructure exists"* to *"a verified, reproducible, legally usable, locally available
-experimental dataset exists"* (or an honest `NOT_PRESENT`). It **reuses** M3 integrity, M4 splitting/
-patching/normalization, and M5 statistics (no second downloader/validator/splitter). Full detail in
-[`docs/datasets/experimental_pipeline.md`](docs/datasets/experimental_pipeline.md) and
-[ADR-0012](docs/adr/ADR-0012-experimental-dataset-and-data-pipeline.md).
-
-| Area | Module | Notes |
-|------|--------|-------|
-| Availability | `availability.py` | Local-FS only — PRESENT / PARTIAL / NOT_PRESENT (never downloads). |
-| Validation | `validation_gates.py` | Files / SHA-256 / labels / dimensions / completeness → `DatasetValidationReport`. |
-| Subset / split | `sampling.py` | Deterministic subset (guarantees thin cloud) + **group-aware, leakage-free** split. |
-| Normalization | `dataset_statistics.py` | Fitted on **train only**; class distribution surfaces thin cloud. |
-| Artifact / gate | `artifact.py` / `readiness.py` | `DatasetArtifact` (deterministic hash) + `is_experiment_ready()` + M11 handoff. |
-
-```bash
-python backend/scripts/validate_dataset.py --dataset cloudsen12
-python backend/scripts/prepare_dataset.py --dataset cloudsen12 --synthetic-smoke --subset 24 --seed 1
-```
-
-The `--synthetic-smoke` path runs the whole pipeline on a **SYNTHETIC / PIPELINE-VALIDATION-ONLY** fixture
-(no rasterio needed). Real CloudSEN12 is currently **NOT PRESENT** (rasterio/tacoreader not installed; the
-pipeline never downloads), so the readiness gate is **False** and real model quality stays **NOT YET
-MEASURED**. This is a dataset milestone — it claims no benchmark scores.
-
-## Backend API (Milestone 13)
-
-A **FastAPI** backend (`app.main:create_app`) exposing `/train /predict /evaluate /models /history /upload
-/metrics /version /health` + Swagger `/docs`, with **SQLite** persistence and request **telemetry**. The API
-is a thin adapter: routers → typed **Pydantic v2** DTOs → **services** that reuse M6 models, M4
-preprocessing, M7 training, M8 evaluation, and the M6/M4/M7 inference predictor — **no domain logic or
-duplicated infrastructure in the API** ([ADR-0013](docs/adr/ADR-0013-backend-api.md)).
-
-| Endpoint | Reuses | Notes |
-|----------|--------|-------|
-| `/version` `/health` `/metrics` | constants / telemetry | versions, liveness/device, per-route latency |
-| `/models` | M6 registry + SQLite | list architectures; register/list model versions |
-| `/train` | **M7 Trainer** | bounded **synthetic** training only (labelled SYNTHETIC); persists a run |
-| `/predict` | **M6 + M4 + M7** | tiled inference (uploaded/inline image or synthetic) |
-| `/evaluate` | **M8** | synthetic evaluation; thin-cloud IoU surfaced |
-| `/upload` `/history` | SQLite | store a file; query training/prediction/evaluation/upload history |
-
-```bash
-backend/.venv/bin/python backend/scripts/serve_api.py --host 127.0.0.1 --port 8000   # Swagger at /docs
-```
-
-All results produced **through the API are SYNTHETIC / VALIDATION ONLY** — the API never fabricates
-real-data metrics, and the bounded M11 **MIXED** conclusion (incl. the cloud-shadow regression) is untouched.
-Tests are framework-free (no `httpx`); the DB lives under git-ignored `outputs/`.
-
-## Frontend (Milestone 14)
-
-A **React 18 + TypeScript 5 + Vite 6** single-page app under `frontend/` drives the M13 API's core flows —
-Dashboard, Models, Predict, Evaluate, **Comparison**, Upload, History, Metrics, Map, System. It consumes the
-API through a **centralized typed axios client** and a **Vite same-origin proxy** (`/api/*` → backend), so the
-backend needs **no CORS change** ([ADR-0014](docs/adr/ADR-0014-frontend.md),
-[`frontend/README.md`](frontend/README.md)).
-
-- Reuses the **M5 CloudSEN12 palette** verbatim; explicit loading / error / empty states everywhere.
-- Every `/train` + `/evaluate` result is badged **SYNTHETIC**; per-class IoU surfaces **thin cloud** (primary)
-  and **cloud shadow** (trade-off), with `undefined` preserved (never 0).
-- The **Comparison** page shows the **REAL bounded** experiment with the **MIXED** conclusion transcribed
-  from the report — no metric invented, no reinterpretation. Pixel-mask rendering / geo-overlay are
-  **DEFERRED** (the API returns class counts, not mask pixels; no mask is fabricated).
-
-```bash
-cd frontend && npm install && npm run dev        # http://127.0.0.1:5173 (proxies /api -> backend :8000)
-```
-
-Verified: `npm install` + `tsc --noEmit` + `vite build` clean; a live backend+Vite integration smoke (proxy →
-all endpoints 200); and a **real browser render** of the Dashboard/Models/Comparison/Evaluate pages with live
-data, including a live `POST /evaluate` round-trip. `node_modules/` and `dist/` are git-ignored.
-
-## Integration — degraded mode, recovery & NT-5 (Milestone 15)
-
-M15 wires the end-to-end system and adds the operability guarantees (FR-7/NFR-6): **degraded mode + recovery**
-and **NT-5** (*detect an invalid record before silent commit; idempotent replay; complete lineage*) in
-`db`/`services` — reusing M8 + M13 (no new engine/dependency)
-([ADR-0015](docs/adr/ADR-0015-integration-degraded-recovery.md), [`docs/integration/`](docs/integration/)).
-
-- **NT-5:** `idempotent_get_or_create` **validates before commit** (invalid ⇒ nothing persisted) and
-  get-or-creates by a deterministic hash (replay is idempotent); `record_lineage` writes a queryable
-  provenance chain (`GET /lineage`).
-- **Degraded mode:** a guardrail (strong aggregate hiding a failing subgroup) wires `GuardrailViolation` to a
-  degraded state — the affected result is labelled and held from silent use; evidence is persisted.
-- **Recovery:** `POST /recover/{event_id}` resolves the event and appends a recovery-log entry; `GET /status`
-  reflects operational/degraded. Endpoints: `GET /status`, `POST /pipeline`, `POST /recover/{id}`,
-  `GET /lineage`. An additive frontend **Status** page drives the flow.
-
-```bash
-# with the API + Vite running: exercise the flow
-curl -s -X POST /api/pipeline -d '{"inject_guardrail_failure":true}'   # → degraded
-curl -s -X POST /api/recover/<event_id>                                 # → operational
-```
-
-Verified: 10 M15 tests; a **live degraded → recovery → operational smoke** through the Vite proxy; a
-**browser** recover-in-UI check (banner flips to operational). Results are **SYNTHETIC / DEMO** only — no
-real-data metric, M11 **MIXED** conclusion untouched.
-
-## Acceptance harness — D5 / negative tests (Milestone 16)
-
-M16 delivers **Deliverable D5**: an acceptance harness proving the five mandatory negative tests
-(**NT-1..NT-5**) and reporting AC-1..4 + KPI status. It **reuses** M8 confusion, M9 failure categories, and
-the M15 degraded/recovery/lineage infra — no duplicated metric or degraded-mode system
-([ADR-0016](docs/adr/ADR-0016-acceptance-harness.md), [`docs/acceptance/`](docs/acceptance/)).
-
-- Each NT has a deterministic **pass** fixture (must not fire) + **fail** fixture (must fire); an NT passes
-  only when both behave correctly (no silent-pass, no false alarm). Every outcome is explainable
-  (requirement / observed / expected / evidence / action).
-- **NT-1** (easy-pixel dominance) & **NT-5** (detect-before-commit / idempotent / lineage) reuse M15; **NT-2**
-  (snow-as-cloud), **NT-3** (thin-cloud leak), **NT-4** (misleading map) are new confusion/metadata guardrails.
-  NT-1..4 detections drive M15 **degraded mode → recovery**.
-- **Honest verdict:** safety properties **PASS** on SYNTHETIC fixtures; formal **KPI/AC-4 acceptance is NOT
-  YET MEASURED** (never fabricated); the M11 **MIXED** conclusion is untouched.
-
-```bash
-backend/.venv/bin/python backend/scripts/run_acceptance.py --output outputs/acceptance   # exit 0 / non-zero
-# or, with the API running:  GET /api/acceptance  (frontend: Acceptance page)
-```
-
-Verified: 13 M16 tests; the harness CLI (deterministic content hash; non-zero exit on failure); a live
-`GET /api/acceptance` through the Vite proxy; and a **browser render** of the Acceptance page (all NT-1..5
-PASS, KPI NOT YET MEASURED).
-
-## Deployment — Docker & Compose (Milestone 17)
-
-Two images + a Compose stack run the system from a clean checkout ([ADR-0017](docs/adr/ADR-0017-deployment-containerization.md);
-operator guide [`docs/deployment/`](docs/deployment/README.md)):
-
-- **backend** — `python:3.11-slim`, **every dep pinned** in `docker/requirements-backend.txt` (audited
-  import set: incl. CPU **torch** + **rasterio/GDAL** — Risk R-12; zero-import heavy libs excluded),
-  non-root, env-driven stdlib `/health` healthcheck.
-- **frontend** — multi-stage `node:20-alpine` build → `nginx:1.27-alpine` static serve; nginx (rendered
-  from an envsubst template) proxies `/api/*` → `backend:8000/*` (strips `/api`, mirroring the Vite dev
-  proxy — no backend CORS change) with **runtime DNS re-resolution** so it survives a backend restart.
-- **compose** — named bridge network, **health-gated** startup, a **named volume** (`cloud-masking-data`)
-  for the SQLite/app data; env-driven ports (`BACKEND_PORT`/`FRONTEND_PORT`), **no secrets**.
-
-```bash
-docker compose -f docker/docker-compose.yml up -d --build
-# UI http://localhost:8080 · API/Swagger http://localhost:8000/docs
-```
-
-**Every** endpoint runs in-container (incl. `/train` & `/predict`), but container torch is **CPU-only**
-(**MPS is host-only**), so inference/training is for *functional*, not benchmark, use. Deployed results
-stay **SYNTHETIC/DEMO** — KPIs **NOT YET MEASURED**, M11 **MIXED** unchanged.
-
-```bash
-backend/.venv/bin/python backend/tests/test_deployment.py          # 34 static checks, no daemon needed
-backend/.venv/bin/python backend/scripts/verify_deployment.py      # black-box probe of a running stack
-```
-
-Verified live: `build --no-cache` green; health-gated `compose up`; **9/9** deployment checks via the
-API *and* the nginx `/api` proxy; a real browser render of the deployed SPA (Dashboard + Acceptance,
-NT-1..5 all PASS); state survived a restart **and** a full `down`/`up`; the proxy survived a backend
-**IP change** (172.20.0.2 → 172.20.0.4) without touching the frontend; env overrides took effect;
-acceptance hash identical host vs container. **Risk R-12 was confirmed for real** — the first clean
-build died on `ImportError: libexpat.so.1` (rasterio's wheel bundles GDAL but still links system libs
-`python:3.11-slim` omits), now fixed with an explicit `libexpat1` layer plus **build-time import
-assertions** so the build fails loudly instead of a user hitting a runtime 500.
-
-## Documentation & release packaging (Milestone 18)
-
-M18 closes **Deliverable D6** ([ADR-0018](docs/adr/ADR-0018-documentation-and-release-packaging.md);
-index at [`docs/`](docs/README.md)):
-
-- **Four artifacts the plan named that did not exist** — [install guide](docs/install/README.md),
-  [user manual](docs/user_guide/README.md), [developer guide](docs/developer_guide/README.md), and an
-  [API reference](docs/api/README.md) **generated from the OpenAPI schema** (15 endpoints, 23 DTOs).
-- **[Package manifest](docs/MANIFEST.md)** — inventory, per-milestone provenance, licences, an explicit
-  evidence table, and the open items.
-- **Two HIGH-severity stale claims fixed:** this README and `backend/README.md` both still described an
-  **M2 scaffold** ("no application logic, nothing installed") fifteen milestones after that stopped
-  being true.
-- **"Complete & consistent" is executable**, not asserted — 19 checks covering required docs, relative
-  links, ADR references, referenced script paths, forbidden stale claims, KPI status and honesty labels.
-
-```bash
-backend/.venv/bin/python backend/tests/test_documentation.py           # 19 checks
-backend/.venv/bin/python backend/scripts/generate_api_docs.py --check  # API reference not stale
-```
-
-The [documentation audit](docs/planning/10_DOCUMENTATION_AUDIT.md) records what M18 deliberately did
-**not** fix — notably **O-1: FR-2's `run_reference.sh` and `evaluation/oracle.py` were never built**, so
-that requirement's stated validation method cannot be run today. Recorded, not fabricated. M18 changed
-no application code and produced **no measurement**.
+---
 
 ## Quick start
 
-Full detail, both paths, troubleshooting → **[installation guide](docs/install/README.md)**.
-
-| Component | Requirement |
-|-----------|-------------|
-| Python | **3.11.x only** ([ADR-0004](docs/adr/ADR-0004-python-runtime.md)) |
-| Node | **20+** |
-| Docker | optional — for the containerized stack |
-| Compute | Apple Silicon (MPS) or CPU; no CUDA |
+**Docker — the whole system, one command:**
 
 ```bash
-# Containers — the whole system, one command
 docker compose -f docker/docker-compose.yml up -d --build
-# UI http://localhost:8080 · API/Swagger http://localhost:8000/docs
 ```
 
+UI → <http://localhost:8080> · API + Swagger → <http://localhost:8000/docs>
+
+**Host development:**
+
 ```bash
-# Host development
 cd backend && python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements-dev.in
 cd ../frontend && npm install && npm run dev
 ```
 
+Full instructions, configuration and troubleshooting → **[installation guide](docs/install/README.md)**.
+
+## What it does
+
+| Capability | Detail |
+|---|---|
+| **Dataset pipeline** | CloudSEN12+ (CC0) acquisition, checksum verification, ROI-grouped leakage-free stratified splits, train-only normalization, and a `is_experiment_ready()` readiness gate that blocks experiments on unvalidated data |
+| **Models** | U-Net baseline (484,228 params) and Attention U-Net (490,005) sharing one abstraction, registry and factory — only the skip path differs |
+| **Training** | Config-driven trainer: AdamW/cosine, callbacks, checkpointing, deterministic seeding, recorded device |
+| **Evaluation** | Confusion-matrix-first; per-class IoU/Dice/precision/recall/F1 plus stratified metrics. Undefined metrics stay undefined — never silently zero |
+| **Failure analysis** | Error taxonomy with an explicit *measurability* status per category, deterministic ranking, per-class false-negative accounting |
+| **Controlled comparison** | Fairness guardrails, thin-cloud-primary decision framework that classifies an aggregate gain hiding a worse class as a **REGRESSION** |
+| **REST API** | FastAPI — 15 endpoints, SQLite persistence, request telemetry, Swagger |
+| **Web UI** | React 18 + TypeScript (strict) + Vite; 12 pages; every result badged with its evidence status |
+| **Safety guardrails** | Degraded mode + recovery, complete lineage, idempotent replay; **NT-1..NT-5 all pass** |
+| **Deployment** | Two containers, health-gated startup, named-volume SQLite, nginx `/api` proxy that survives a backend restart |
+
+## Architecture
+
+Dependencies point **inward** — domain logic never depends on delivery mechanisms.
+
+```mermaid
+flowchart TD
+    FE["frontend/ — React SPA"]
+    NG["nginx — static SPA + /api proxy"]
+    API["app/api/ — thin FastAPI routers"]
+    SVC["app/services/ — use-cases"]
+    DOM["Domain: models · preprocessing · training<br/>evaluation · failure_analysis · comparison<br/>datasets · acceptance"]
+    CORE["app/core/ — config · constants · logging · exceptions"]
+    DB[("SQLite — versions · runs · predictions<br/>evaluations · lineage")]
+
+    FE --> NG -->|"/api/* → /*"| API --> SVC --> DOM --> CORE
+    SVC --> DB
+```
+
+The rule that keeps this honest: **routers hold no domain logic, and services never reimplement a domain
+package.** No second trainer, no second metric, no second degraded-mode system.
+
+Detail → [architecture](docs/planning/03_ARCHITECTURE.md) · [developer guide](docs/developer_guide/README.md).
+
+## Documentation
+
+**Start at [`docs/README.md`](docs/README.md)** — the index.
+
+| I want to… | Read |
+|---|---|
+| Install and run it | [Installation guide](docs/install/README.md) |
+| Use the application | [User manual](docs/user_guide/README.md) |
+| Change the code | [Developer guide](docs/developer_guide/README.md) |
+| Call the API | [API reference](docs/api/README.md) *(generated from OpenAPI)* |
+| Deploy it | [Deployment guide](docs/deployment/README.md) |
+| Read the research | [Paper](paper/00_RESEARCH_PAPER.md) · [literature review](paper/01_LITERATURE_REVIEW.md) · [references](paper/references.bib) |
+| Review it *(O5)* | [Package manifest](docs/MANIFEST.md) · [acceptance harness](docs/acceptance/README.md) · [KPIs & negative tests](docs/planning/06_KPI_ACCEPTANCE.md) |
+| Understand a decision | [ADR-0001 … ADR-0019](docs/adr/) |
+
 ## Verify
 
-`pytest` is **not** installed in this project's venv, so every test file also runs standalone:
+`pytest` is intentionally not installed, so every test file also runs standalone:
 
 ```bash
 backend/.venv/bin/python backend/scripts/run_acceptance.py       # NT-1..NT-5, non-zero on failure
+backend/.venv/bin/python backend/tests/test_paper.py             # research-evidence integrity
 backend/.venv/bin/python backend/tests/test_documentation.py     # docs complete & consistent
 backend/.venv/bin/python backend/tests/test_deployment.py        # deployment contract (no daemon needed)
 backend/.venv/bin/python backend/scripts/verify_deployment.py    # probes a running stack
 ```
 
-## Documentation
+Several project claims are enforced as tests rather than asserted in prose: that the docs are
+consistent, that the deployment contract holds, and that **no paper number drifts from its source
+record**.
 
-**Everything starts at [`docs/README.md`](docs/README.md)** — the documentation index.
+## Tech stack
 
-| I want to… | Read |
-|------------|------|
-| Get it running | [Installation guide](docs/install/README.md) |
-| Use it | [User manual](docs/user_guide/README.md) |
-| Change the code | [Developer guide](docs/developer_guide/README.md) |
-| Call the API | [API reference](docs/api/README.md) *(generated from OpenAPI)* |
-| Deploy it | [Deployment guide](docs/deployment/README.md) |
-| Review it (O5) | [Package manifest](docs/MANIFEST.md) · [Acceptance harness](docs/acceptance/README.md) |
+**Backend** Python 3.11 · FastAPI · PyTorch (CPU/MPS — no CUDA) · SQLAlchemy 2.0 · rasterio/GDAL · NumPy
+**Frontend** React 18 · TypeScript 5 (strict) · Vite 6 · axios · Leaflet
+**Infra** Docker + Compose · nginx · SQLite
 
-- Planning & acceptance: [`docs/planning/`](docs/planning/) — charter, requirements/traceability,
-  system boundary, architecture, source-to-claim map, risk register, KPIs/AC/NT, milestone plan,
-  assumptions, consistency audit, [documentation audit](docs/planning/10_DOCUMENTATION_AUDIT.md).
-- Decisions: [`docs/adr/`](docs/adr/) — ADR-0001 … ADR-0018 (ADR-0005 was never issued).
+Environment: **Python 3.11.x only** ([ADR-0004](docs/adr/ADR-0004-python-runtime.md)), **Node ≥ 20**,
+Apple Silicon (MPS) or CPU ([ADR-0002](docs/adr/ADR-0002-compute-environment.md)).
 
-## Project progress
-
-**Current status:** **Milestone 17 (Docker / deployment) complete** — the system is containerized as a
-backend API image (`python:3.11-slim`, GDAL/geo deps **pinned** — Risk R-12) and a multi-stage nginx
-frontend image, wired by `docker/docker-compose.yml` (private network, health-gated startup, a named volume
-for the SQLite/app data); `docker compose up` runs the system from a clean checkout. Configuration is
-env-driven with **no secrets**; the backend bundles **CPU torch** so every endpoint runs (MPS host-only,
-so `/train`/`/predict` are functional not benchmark); deployed results stay **SYNTHETIC/DEMO** (KPIs
-**NOT YET MEASURED**, M11 **MIXED** unchanged).
-Before it, **Milestone 16 (Testing / acceptance harness D5)** proved the five mandatory negative tests
-**NT-1..NT-5** (each with a pass + fail fixture), reusing M8/M9 and the M15 degraded/recovery/lineage infra;
-**safety properties PASS on synthetic fixtures while formal KPI/AC-4 acceptance stays NOT YET MEASURED**
-(never fabricated). Earlier, **M15 (Integration)** added degraded mode +
-recovery + NT-5 in `db`/`services`; **M14 (Frontend)** delivered the React/TS/Vite SPA over the M13 API; and
-**M13 (Backend API)** exposed the M6–M12 capabilities as a FastAPI service layer (results SYNTHETIC /
-VALIDATION ONLY; M11 **MIXED** conclusion preserved throughout). Previously, the **first real experiment** was
-executed: a bounded, reproducible **CloudSEN12+** subset (32
-expert-labelled L1C samples, CC0) was acquired via **tacoreader 0.6.5** into git-ignored `data/raw/`, passed
-the M12 `is_experiment_ready()` gate (**READY**: validated, checksummed, ROI/scene-grouped leakage-free split
-24→22/5/5, thin cloud in every split, train-only normalization), and drove the **real M11** U-Net vs
-Attention U-Net comparison on **Apple MPS** (M7 training + M8 evaluation + M9 failure analysis; only the
-architecture differs). **Measured, real result (3 seeds):** Attention U-Net **consistently improves the
-primary thin-cloud metric** (IoU mean **+0.050**, recall & false-negatives better every seed) at ~1.01×
-params / ~1.2–1.3× train time, but with a small consistent **cloud-shadow** trade-off, so the overall verdict
-is **MIXED** (framework: IMPROVED / REGRESSION / REGRESSION across seeds — no forced winner). Full detail:
-[`docs/comparison/real_experiment_cloudsen12.md`](docs/comparison/real_experiment_cloudsen12.md). This is a
-bounded first run, **not** the frozen AC-4 benchmark; formal project KPIs remain **NOT YET MEASURED**.
-Earlier M12 built the readiness pipeline itself (reusing M3/M4/M5); synthetic pipeline-validation results
-remain separately labelled SYNTHETIC.
+## Repository layout
 
 ```
-✅ Milestone 1  – Planning
-✅ Milestone 2  – Project Scaffold
-✅ Milestone 3  – Dataset Management
-✅ Milestone 4  – Data Preprocessing
-✅ Milestone 5  – Visualization & EDA
-✅ Milestone 6  – Baseline Model
-✅ Milestone 7  – Training Engine
-✅ Milestone 8  – Evaluation
-✅ Milestone 9  – Confusing-Case Evaluation
-✅ Milestone 10 – Improved Model
-✅ Milestone 11 – Comparison
-✅ Milestone 12 – Experimental Dataset & Data Pipeline
-✅ Milestone 13 – Backend API
-✅ Milestone 14 – Frontend
-✅ Milestone 15 – Integration
-✅ Milestone 16 – Testing (acceptance harness / D5)
-✅ Milestone 17 – Docker (deployment & clean-environment)
-✅ Milestone 18 – Documentation (D6: guides, API reference, manifest)
-⬜ Milestone 19 – Research Paper
-⬜ Milestone 20 – Final Delivery (Presentation)
+backend/     FastAPI + PyTorch — app/ (18 packages) · scripts/ (22 CLIs) · tests/ · configs/
+frontend/    React + TypeScript + Vite SPA
+docker/      Dockerfiles · compose · nginx template · pinned runtime deps
+docs/        index · guides (install/user/developer/api/deployment) · planning · ADRs · manifest
+paper/       research paper · literature review · comparison table · ablation template · BibTeX
+data/        manifests + metadata tracked; payloads git-ignored
+models/      checkpoints (git-ignored)
+outputs/     SQLite · uploads · reports (git-ignored)
 ```
+
+## Datasets
+
+| Dataset | Role | Licence |
+|---|---|---|
+| **CloudSEN12+** | Primary — 4-class expert-labelled Sentinel-2 | **CC0-1.0** (redistribution permitted) |
+| **On Cloud N** | Reference benchmark only | Competition terms — **redistribution prohibited**, kept git-ignored |
+
+No dataset ships with this repository and the deployment image deliberately cannot download one.
+See [dataset guide](docs/datasets/README.md) and [licences](docs/datasets/licenses.md).
+
+## Project status
+
+**Milestone 19 of 20 complete** — the research paper. The system is fully operable and containerized;
+the remaining work is the final presentation package (M20) plus the independent-acceptance blockers
+listed under [evidence status](#what-is-and-is-not-measured).
+
+```
+✅ M1  Planning              ✅ M8   Evaluation            ✅ M15 Integration
+✅ M2  Scaffold              ✅ M9   Failure analysis      ✅ M16 Acceptance harness (D5)
+✅ M3  Dataset management    ✅ M10  Attention U-Net       ✅ M17 Docker deployment
+✅ M4  Preprocessing         ✅ M11  Controlled comparison ✅ M18 Documentation (D6)
+✅ M5  Visualization & EDA   ✅ M12  Dataset pipeline      ✅ M19 Research paper (D7)
+✅ M6  Baseline U-Net        ✅ M13  Backend API           ⬜ M20 Presentation & final delivery
+✅ M7  Training engine       ✅ M14  Frontend
+```
+
+Full history and per-milestone exit criteria → [milestone plan](docs/planning/07_MILESTONE_PLAN.md).
+
+## Licence
+
+**TBD** — to be confirmed by the repository owner before any public release
+(`backend/pyproject.toml`). Third-party dependencies are MIT/BSD/Apache-2.0; dataset licences are above.
 
 ## Git
 
-The repository owner is the **sole Git author**. This scaffold performs **no** Git operations; suggested
-commands are listed in the milestone completion report for the owner to run manually.
+The repository owner is the **sole Git author**. This project performs no Git operations; suggested
+commands are listed in each milestone completion report for the owner to run manually.
