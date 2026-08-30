@@ -4,10 +4,16 @@ KL University two-semester engineering capstone (CP1 + CP2). An end-to-end syste
 satellite **cloud masking**, with stratified evaluation on thin cloud, snow and bright surfaces, a
 cloud-vs-bright-surface contribution, and quantified downstream impact on a change-detection task.
 
-> **Status: Milestone 2 (Project Scaffold) complete.** This repository currently contains the planning
-> documents (M1) and the project scaffold (M2) only — **no application logic, no installed dependencies,
-> no datasets**. Functionality is delivered milestone-by-milestone per
-> [`docs/planning/07_MILESTONE_PLAN.md`](docs/planning/07_MILESTONE_PLAN.md).
+> **Status: Milestone 18 (Documentation) complete — 18 of 20 milestones.** The system is fully
+> operable: dataset pipeline, U-Net + Attention U-Net, training/evaluation/failure analysis, a FastAPI
+> backend, a React frontend, degraded mode + recovery, the D5 acceptance harness, and a Docker Compose
+> deployment. **Start here → [`docs/`](docs/README.md)** (install · user manual · developer guide ·
+> API reference · deployment · package manifest).
+>
+> **Evidence status, up front:** exactly **one** result in this project is REAL — the bounded
+> CloudSEN12+ U-Net vs Attention U-Net comparison, whose conclusion is **MIXED**. Every formal KPI is
+> **NOT YET MEASURED** (they need a frozen AC-4 dataset). Everything else the system produces is
+> **SYNTHETIC** or **DEMO** and is labelled as such wherever it is shown. Nothing is ever fabricated.
 
 ## Supported environment
 
@@ -426,43 +432,83 @@ build died on `ImportError: libexpat.so.1` (rasterio's wheel bundles GDAL but st
 `python:3.11-slim` omits), now fixed with an explicit `libexpat1` layer plus **build-time import
 assertions** so the build fails loudly instead of a user hitting a runtime 500.
 
-## Prerequisites (for later milestones — nothing is installed at M2)
+## Documentation & release packaging (Milestone 18)
 
-- Python **3.11.x** (e.g. via `pyenv`, `conda`, or a system 3.11).
-- Node **20+** (for the frontend, from M14).
-- Optionally Docker (from M17).
+M18 closes **Deliverable D6** ([ADR-0018](docs/adr/ADR-0018-documentation-and-release-packaging.md);
+index at [`docs/`](docs/README.md)):
 
-## Setup (later milestones — do NOT run at M2)
+- **Four artifacts the plan named that did not exist** — [install guide](docs/install/README.md),
+  [user manual](docs/user_guide/README.md), [developer guide](docs/developer_guide/README.md), and an
+  [API reference](docs/api/README.md) **generated from the OpenAPI schema** (15 endpoints, 23 DTOs).
+- **[Package manifest](docs/MANIFEST.md)** — inventory, per-milestone provenance, licences, an explicit
+  evidence table, and the open items.
+- **Two HIGH-severity stale claims fixed:** this README and `backend/README.md` both still described an
+  **M2 scaffold** ("no application logic, nothing installed") fifteen milestones after that stopped
+  being true.
+- **"Complete & consistent" is executable**, not asserted — 19 checks covering required docs, relative
+  links, ADR references, referenced script paths, forbidden stale claims, KPI status and honesty labels.
 
 ```bash
-# Backend (Python 3.11 virtual environment)
-cd backend
-python3.11 -m venv .venv && source .venv/bin/activate
-# Authoritative source is requirements.in; a pinned lock is generated later via pip-compile.
-pip install -r requirements-dev.in
+backend/.venv/bin/python backend/tests/test_documentation.py           # 19 checks
+backend/.venv/bin/python backend/scripts/generate_api_docs.py --check  # API reference not stale
 ```
 
-## Verify the scaffold (Milestone 2)
+The [documentation audit](docs/planning/10_DOCUMENTATION_AUDIT.md) records what M18 deliberately did
+**not** fix — notably **O-1: FR-2's `run_reference.sh` and `evaluation/oracle.py` were never built**, so
+that requirement's stated validation method cannot be run today. Recorded, not fabricated. M18 changed
+no application code and produced **no measurement**.
 
-The structure/import tests are **standard-library only** and pass without installing any dependencies:
+## Quick start
+
+Full detail, both paths, troubleshooting → **[installation guide](docs/install/README.md)**.
+
+| Component | Requirement |
+|-----------|-------------|
+| Python | **3.11.x only** ([ADR-0004](docs/adr/ADR-0004-python-runtime.md)) |
+| Node | **20+** |
+| Docker | optional — for the containerized stack |
+| Compute | Apple Silicon (MPS) or CPU; no CUDA |
 
 ```bash
-cd backend && python -m pytest -q
+# Containers — the whole system, one command
+docker compose -f docker/docker-compose.yml up -d --build
+# UI http://localhost:8080 · API/Swagger http://localhost:8000/docs
 ```
 
-If `pytest` is unavailable, verify import-cleanliness directly:
+```bash
+# Host development
+cd backend && python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements-dev.in
+cd ../frontend && npm install && npm run dev
+```
+
+## Verify
+
+`pytest` is **not** installed in this project's venv, so every test file also runs standalone:
 
 ```bash
-cd backend && python -c "import importlib; [importlib.import_module(m) for m in ['app','app.main','app.core.config','app.core.constants','app.core.exceptions','app.core.logging_config']]; print('imports OK')"
+backend/.venv/bin/python backend/scripts/run_acceptance.py       # NT-1..NT-5, non-zero on failure
+backend/.venv/bin/python backend/tests/test_documentation.py     # docs complete & consistent
+backend/.venv/bin/python backend/tests/test_deployment.py        # deployment contract (no daemon needed)
+backend/.venv/bin/python backend/scripts/verify_deployment.py    # probes a running stack
 ```
 
 ## Documentation
 
+**Everything starts at [`docs/README.md`](docs/README.md)** — the documentation index.
+
+| I want to… | Read |
+|------------|------|
+| Get it running | [Installation guide](docs/install/README.md) |
+| Use it | [User manual](docs/user_guide/README.md) |
+| Change the code | [Developer guide](docs/developer_guide/README.md) |
+| Call the API | [API reference](docs/api/README.md) *(generated from OpenAPI)* |
+| Deploy it | [Deployment guide](docs/deployment/README.md) |
+| Review it (O5) | [Package manifest](docs/MANIFEST.md) · [Acceptance harness](docs/acceptance/README.md) |
+
 - Planning & acceptance: [`docs/planning/`](docs/planning/) — charter, requirements/traceability,
   system boundary, architecture, source-to-claim map, risk register, KPIs/AC/NT, milestone plan,
-  assumptions, consistency audit.
-- Decisions: [`docs/adr/`](docs/adr/) — ADR-0001 (datasets), ADR-0002 (compute), ADR-0003 (change-detection
-  source, deferred), ADR-0004 (Python runtime).
+  assumptions, consistency audit, [documentation audit](docs/planning/10_DOCUMENTATION_AUDIT.md).
+- Decisions: [`docs/adr/`](docs/adr/) — ADR-0001 … ADR-0018 (ADR-0005 was never issued).
 
 ## Project progress
 
@@ -512,7 +558,7 @@ remain separately labelled SYNTHETIC.
 ✅ Milestone 15 – Integration
 ✅ Milestone 16 – Testing (acceptance harness / D5)
 ✅ Milestone 17 – Docker (deployment & clean-environment)
-⬜ Milestone 18 – Documentation
+✅ Milestone 18 – Documentation (D6: guides, API reference, manifest)
 ⬜ Milestone 19 – Research Paper
 ⬜ Milestone 20 – Final Delivery (Presentation)
 ```

@@ -108,7 +108,7 @@ Cloud_Masking/
 ├── frontend/               # M14: React18+TS5(strict)+Vite6 SPA (index.html, vite.config.ts w/ /api proxy, tsconfig)
 │   └── src/                # services/{apiClient,api,types} · hooks · context/SystemContext · components/{Layout,ui,ClassViz} · pages/(10) · utils/{colors=M5 palette,format} · data/realComparison (cited)
 ├── docker/                 # M17: backend/frontend Dockerfiles + nginx.conf.template + requirements-backend.txt (pinned GDAL/geo, R-12) + docker-compose.yml (private net, health-gated, named volume)
-├── docs/                   # planning/ · adr/ (M1); dataset/install/user/dev/deploy guides (M18)
+├── docs/                   # M18: README (index) · MANIFEST (D6) · install/ · user_guide/ · developer_guide/ · api/ (generated) · deployment/ (M17) · planning/ · adr/ · per-milestone references
 ├── data/                   # raw/{cloudsen12,on_cloud_n} external/ (git-ignored) · manifests/ metadata/ samples/ (tracked)
 ├── models/                 # checkpoints/ trained weights (git-ignored)
 ├── experiments/            # curated experiment logs, ablations, metric summaries, sweeps (M7+)
@@ -155,6 +155,7 @@ Cloud_Masking/
 - **ADR-0015** — Integration: degraded mode + recovery + NT-5 (detect-before-commit, idempotent get-or-create, complete lineage) in `db`/`services`; guardrail wires `GuardrailViolation` → degraded; `/status /pipeline /recover /lineage`; reuses M8/M13, no new dependency; SYNTHETIC/DEMO only. *(ACCEPTED)*
 - **ADR-0016** — Acceptance harness (D5): proves NT-1..NT-5 (pass+fail fixtures) reusing M8 confusion + M15 degraded/recovery/lineage; NT-2/3/4 new guardrails; `run_acceptance` CLI (non-zero on fail) + `/acceptance`; SAFETY passes on synthetic, KPI/AC-4 NOT YET MEASURED (never fabricated). *(ACCEPTED)*
 - **ADR-0017** — Deployment/containerization: two images (`python:3.11-slim` API with a pinned GDAL/geo + CPU-torch layer; `node:20-alpine`→`nginx:1.27-alpine` SPA) on a private Compose network, health-gated startup, named-volume SQLite; nginx mirrors the Vite `/api` rewrite and re-resolves the upstream; env-driven config, no secrets; R-12 needs pinned wheel **plus** `libexpat1`. *(ACCEPTED)*
+- **ADR-0018** — Documentation & release packaging (D6): Markdown-in-repo (no docs site); the API reference is **generated** from the OpenAPI schema so code stays the single source of truth; "docs complete & consistent" is made **executable** via `tests/test_documentation.py`; no application-code change; honest gaps recorded, not closed. *(ACCEPTED)*
 - **ADR-0010** — Improved model: **Attention U-Net** (attention-gated skips), MPS-friendly, low-risk; DeepLabV3+/UNet++ future. Performance NOT YET MEASURED. *(ACCEPTED)*
 
 ## 5. Cross-Cutting Concerns

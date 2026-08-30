@@ -115,7 +115,7 @@ backend/.venv/bin/python backend/tests/test_documentation.py     # docs complete
 ```
 
 `pytest` is **not** installed in this project's venv, so every test file is also runnable directly as a
-standalone harness (`python backend/tests/test_x.py`). See the
+standalone harness (for example `python backend/tests/test_acceptance.py`). See the
 [developer guide](../developer_guide/README.md#running-the-tests).
 
 ---
@@ -167,7 +167,7 @@ experiment. See the [dataset guide](../datasets/README.md).
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `ImportError: libexpat.so.1` in a container | `rasterio`'s wheel bundles GDAL but links system libs `python:3.11-slim` omits | Already fixed in `docker/backend.Dockerfile`; rebuild without cache |
-| `ModuleNotFoundError: pytest` | Intentional — pytest is not installed | Run test files directly: `python backend/tests/test_x.py` |
+| `ModuleNotFoundError: pytest` | Intentional — pytest is not installed | Run test files directly, e.g. `python backend/tests/test_acceptance.py` |
 | `CERTIFICATE_VERIFY_FAILED` | macOS framework Python has no CA store | `ensure_tls_ca()`, or export `SSL_CERT_FILE=$(python -c "import certifi;print(certifi.where())")` |
 | `/train` or `/predict` returns **503** | PyTorch missing in that environment | Install `requirements-dev.in`; the Docker image already has CPU torch |
 | Vite dev server 404s on everything | Started from the wrong directory | Run `npm run dev` from `frontend/` |

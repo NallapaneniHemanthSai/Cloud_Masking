@@ -167,5 +167,23 @@
   acceptance content hash identical host vs container (`53b906bbc38f`); non-root uid 10001; no secrets
   in either image. Regressions green: M11 23 / M12 18 / M13 15 / M15 10 / M16 13 / M17 34; imports
   100/100; structure 43 dirs + 203 files; frontend typecheck+build clean. `docs/deployment/`.
-- **M18–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
+- **M18: COMPLETE** (awaiting approval) — Documentation / release packaging (**D6**): ADR-0018, a
+  documentation **index** (`docs/README.md`) and **package manifest** (`docs/MANIFEST.md`: inventory,
+  per-milestone provenance, licences, evidence status, open items), plus the four artifacts the M18 row
+  named that **did not exist**: **install guide**, **user manual**, **developer guide**, and an **API
+  reference generated from the OpenAPI schema** (`scripts/generate_api_docs.py`, `--check` mode; code is
+  the single source of truth, so the reference cannot silently drift). Fixed two **HIGH**-severity stale
+  claims: `README.md` and `backend/README.md` both still described an **M2 scaffold** ("no application
+  logic, nothing installed") fifteen milestones after that stopped being true. "Docs complete &
+  consistent" is made **executable** by `tests/test_documentation.py` (19 checks: required docs, relative
+  links, ADR references + numbering, referenced script paths, forbidden stale claims, KPI table still
+  NOT YET MEASURED, M11 still MIXED, honesty labels explained, API surface unchanged) rather than
+  asserted by a dated note. `docs/planning/10_DOCUMENTATION_AUDIT.md` records the audit — including
+  **open finding O-1: FR-2's `scripts/run_reference.sh` and `app/evaluation/oracle.py` were never
+  built** (M6–M9 scope), so FR-2's stated validation method cannot be executed today; recorded rather
+  than fabricated. **No application code changed** beyond `DOCS_VERSION = "0.18.0"`; API surface
+  unchanged (15 routes); **no measurement produced** — KPIs stay **NOT YET MEASURED**, M11 stays
+  **MIXED**. Verified: M18 19/19; M11 23 / M12 18 / M13 15 / M15 10 / M16 13 / M17 34; imports 100/100;
+  structure 47 dirs + 212 files; frontend typecheck+build clean; live Docker stack 9/9. `docs/`.
+- **M19–M20: NOT STARTED.** *(This milestone brief scoped M12 as the dataset-readiness pipeline; the
   original plan's "Change detection" work follows in a later milestone.)*
